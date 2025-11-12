@@ -49,8 +49,19 @@ CREATE DATABASE chamcong;
 -- Create user with password
 CREATE USER chamcong_user WITH PASSWORD 'your_secure_password';
 
--- Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE chamcong TO chamcong_user;
+-- Make the user the owner of the database (recommended)
+ALTER DATABASE chamcong OWNER TO chamcong_user;
+
+-- Connect to the database
+\c chamcong
+
+-- Grant schema permissions (required for PostgreSQL 15+)
+GRANT ALL ON SCHEMA public TO chamcong_user;
+GRANT USAGE, CREATE ON SCHEMA public TO chamcong_user;
+
+-- Grant all privileges on existing objects (if any)
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO chamcong_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO chamcong_user;
 
 -- Exit psql
 \q
@@ -159,6 +170,20 @@ DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require
 - Edit PostgreSQL's `pg_hba.conf` file to allow password authentication
 - Change `peer` to `md5` for local connections
 - Restart PostgreSQL: `sudo systemctl restart postgresql`
+
+**Error: "permission denied for schema public"**
+This is common in PostgreSQL 15+. Fix by granting schema permissions:
+```bash
+# Connect as postgres superuser
+sudo -u postgres psql
+
+# Run these commands:
+\c chamcong
+GRANT ALL ON SCHEMA public TO chamcong_user;
+GRANT USAGE, CREATE ON SCHEMA public TO chamcong_user;
+ALTER DATABASE chamcong OWNER TO chamcong_user;
+\q
+```
 
 ### Checking Database Connection
 
