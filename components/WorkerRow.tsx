@@ -53,12 +53,12 @@ export default function WorkerRow({
     currentStatus === "absent";
 
   return (
-    <div className={`bg-gray-50 rounded-xl p-4 border-l-4 border-blue-500 shadow-sm ${className}`}>
+    <div className={`bg-gray-50 rounded-xl p-4 lg:p-5 border-l-4 border-blue-500 shadow-sm hover:shadow-md transition-shadow ${className}`}>
       {/* Worker Info Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-3 lg:mb-4">
         <div className="flex-1">
-          <p className="font-bold text-base text-gray-900">{worker.name}</p>
-          <p className="text-xs text-gray-600 mt-0.5">
+          <p className="font-bold text-base lg:text-lg text-gray-900">{worker.name}</p>
+          <p className="text-xs lg:text-sm text-gray-600 mt-0.5">
             {worker.code} {worker.team && `• ${worker.team}`}
           </p>
         </div>
@@ -70,21 +70,21 @@ export default function WorkerRow({
         )}
       </div>
 
-      {/* Status Buttons - 3 columns grid for mobile */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      {/* Status Buttons - 3 columns on mobile, 6 columns on desktop */}
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 mb-3">
         {STATUS_OPTIONS.map((option) => {
           const isActive = currentStatus === option.key;
           return (
             <button
               key={option.key}
               onClick={() => onStatusChange(worker.id, option.key, false, currentShiftAmount)}
-              className={`px-2 py-2.5 rounded-lg font-semibold transition-all text-xs sm:text-sm flex flex-col items-center justify-center gap-1 ${
+              className={`px-2 lg:px-3 py-2.5 lg:py-3 rounded-lg font-semibold transition-all text-xs sm:text-sm lg:text-base flex flex-col items-center justify-center gap-1 ${
                 isActive
                   ? "bg-blue-500 text-white shadow-md scale-105"
                   : "bg-white text-gray-700 hover:bg-gray-100 active:bg-gray-200 border border-gray-300"
               }`}
             >
-              <span className="text-base">{option.emoji}</span>
+              <span className="text-base lg:text-lg">{option.emoji}</span>
               <span className="leading-tight">{option.label}</span>
             </button>
           );
@@ -96,7 +96,7 @@ export default function WorkerRow({
         <div className="flex gap-2 mb-3">
           <button
             onClick={() => onStatusChange(worker.id, currentStatus || "absent", false, 1.0)}
-            className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${
+            className={`flex-1 px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition-all text-sm lg:text-base ${
               currentShiftAmount === 1.0
                 ? "bg-blue-500 text-white shadow-md"
                 : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
@@ -106,7 +106,7 @@ export default function WorkerRow({
           </button>
           <button
             onClick={() => onStatusChange(worker.id, currentStatus || "absent", false, 0.5)}
-            className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${
+            className={`flex-1 px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition-all text-sm lg:text-base ${
               currentShiftAmount === 0.5
                 ? "bg-blue-500 text-white shadow-md"
                 : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
@@ -122,13 +122,13 @@ export default function WorkerRow({
         <div className="flex flex-col sm:flex-row gap-2">
           <button
             onClick={() => onStatusChange(worker.id, "present", true, currentShiftAmount)}
-            className="flex-1 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-4 py-3 rounded-lg font-bold transition-all text-sm sm:text-base shadow-md"
+            className="flex-1 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-4 lg:px-5 py-3 lg:py-3.5 rounded-lg font-bold transition-all text-sm sm:text-base lg:text-lg shadow-md"
           >
             ⏰ Vào: {attendance?.check_in || "---"}
           </button>
           <button
             onClick={() => onCheckOut(worker.id)}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-4 py-3 rounded-lg font-bold transition-all text-sm sm:text-base shadow-md"
+            className="flex-1 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-4 lg:px-5 py-3 lg:py-3.5 rounded-lg font-bold transition-all text-sm sm:text-base lg:text-lg shadow-md"
           >
             🏁 Ra: {attendance?.check_out || "---"}
           </button>

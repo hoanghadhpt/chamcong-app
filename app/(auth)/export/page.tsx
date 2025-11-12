@@ -76,36 +76,36 @@ export default function ExportPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-2xl font-bold text-primary mb-6">
+    <div className="space-y-4 max-w-7xl mx-auto p-4 lg:p-6 xl:p-8">
+      <div className="bg-white rounded-xl shadow-md p-4 lg:p-6">
+        <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-6 lg:mb-8">
           {vi.export.title}
         </h2>
 
-        <form onSubmit={handleExport} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form onSubmit={handleExport} className="space-y-4 lg:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm lg:text-base font-medium text-gray-700 mb-2">
                 {vi.export.fromDate}
               </label>
               <input
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
+                className="w-full px-4 lg:px-5 py-3 lg:py-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm lg:text-base font-medium text-gray-700 mb-2">
                 {vi.export.toDate}
               </label>
               <input
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
+                className="w-full px-4 lg:px-5 py-3 lg:py-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg"
                 required
               />
             </div>
@@ -222,18 +222,18 @@ export default function ExportPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-base"
+            className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-3 lg:py-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-base lg:text-xl shadow-md"
           >
             {loading ? vi.export.generating + "..." : vi.export.download}
           </button>
         </form>
       </div>
 
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h3 className="font-bold text-green-900 mb-2">
+      <div className="bg-green-50 border border-green-200 rounded-xl p-4 lg:p-6">
+        <h3 className="font-bold text-green-900 mb-2 lg:mb-3 text-base lg:text-lg">
           💡 {vi.export.tips}
         </h3>
-        <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+        <ul className="text-sm lg:text-base text-green-800 space-y-1 lg:space-y-2 list-disc list-inside">
           <li>{vi.export.tip1}</li>
           <li>{vi.export.tip2}</li>
           <li>{vi.export.tip3}</li>

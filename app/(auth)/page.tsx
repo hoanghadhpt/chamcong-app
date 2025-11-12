@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Toast from "@/components/Toast";
 import DateHeader from "@/components/DateHeader";
 import TeamFilter from "@/components/TeamFilter";
@@ -63,19 +63,21 @@ export default function HomePage() {
     new Date().toISOString().split("T")[0]
   );
 
-  // Toggle team expansion
-  const toggleTeamExpanded = (team: string) => {
-    const newExpanded = new Set(expandedTeams);
-    if (newExpanded.has(team)) {
-      newExpanded.delete(team);
-    } else {
-      newExpanded.add(team);
-    }
-    setExpandedTeams(newExpanded);
-  };
+  // Toggle team expansion (optimized with useCallback)
+  const toggleTeamExpanded = useCallback((team: string) => {
+    setExpandedTeams((prev) => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(team)) {
+        newExpanded.delete(team);
+      } else {
+        newExpanded.add(team);
+      }
+      return newExpanded;
+    });
+  }, []);
 
-  // Filter teams by search query
-  const getFilteredTeams = () => {
+  // Filter teams by search query (optimized with useMemo)
+  const filteredTeams = useMemo(() => {
     const teamsMap = groupWorkersByTeam(workers);
     if (!searchQuery.trim()) {
       return teamsMap;
@@ -105,7 +107,7 @@ export default function HomePage() {
     }
 
     return filtered;
-  };
+  }, [workers, searchQuery]);
 
   useEffect(() => {
     fetchData();
@@ -333,14 +335,12 @@ export default function HomePage() {
     );
   }
 
-  const filteredTeams = getFilteredTeams();
-
   return (
     <>
       {/* Offline Indicator */}
       <OfflineIndicator />
 
-      <div className="space-y-4 pb-28 bg-beige-50 min-h-screen p-4">
+      <div className="space-y-4 pb-28 lg:pb-8 bg-beige-50 min-h-screen p-4 lg:p-6 xl:p-8 max-w-7xl mx-auto">
         {/* Date Header */}
         <DateHeader
           selectedDate={selectedDate}
@@ -355,10 +355,10 @@ export default function HomePage() {
           onCollapseAll={() => setExpandedTeams(new Set())}
         />
 
-        {/* Team Sections */}
-        <div className="space-y-3">
+        {/* Team Sections - Multi-column layout on large screens */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 xl:gap-4">
           {filteredTeams.size === 0 ? (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center">
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center xl:col-span-2">
               <div className="text-3xl mb-2">🔍</div>
               <p className="text-yellow-800 font-medium">
                 {searchQuery
