@@ -257,14 +257,15 @@ export default function WorkersPage() {
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-2xl font-bold text-primary mb-4">{vi.workers.title}</h2>
 
-        <div className="flex gap-2 flex-wrap mb-4">
+        {/* Action buttons - optimized for mobile */}
+        <div className="grid grid-cols-2 sm:flex gap-2 flex-wrap mb-4">
           <button
             onClick={() => {
               setShowForm(!showForm);
               setEditingId(null);
               setFormData({ code: "", name: "", phone: "", team: "" });
             }}
-            className="bg-accent hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition"
+            className="bg-accent hover:bg-blue-600 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base sm:text-base"
           >
             {showForm && !editingId ? vi.common.cancel : vi.workers.add}
           </button>
@@ -272,14 +273,14 @@ export default function WorkersPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={saving}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold transition disabled:opacity-50"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition disabled:opacity-50 text-base"
           >
             {vi.workers.import}
           </button>
 
           <button
             onClick={handleExport}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base col-span-2 sm:col-span-1"
           >
             {vi.workers.export}
           </button>
@@ -368,16 +369,17 @@ export default function WorkersPage() {
                 )}
               </div>
 
-              <div className="flex gap-2">
+              {/* Action buttons - optimized for mobile */}
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
                 <button
                   onClick={() => handleEdit(worker)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold transition"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition text-base"
                 >
                   {vi.common.edit}
                 </button>
                 <button
                   onClick={() => handleDelete(worker.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-semibold transition"
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition text-base"
                 >
                   {vi.common.delete}
                 </button>

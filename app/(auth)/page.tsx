@@ -269,7 +269,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-24">
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-2xl font-bold text-primary mb-2">{vi.attendance.title}</h2>
         <p className="text-gray-600">
@@ -282,7 +282,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 sm:pb-0">
         {Array.from(groupWorkersByTeam(workers).entries()).map(([team, teamWorkers]) => {
           const presentCount = teamWorkers.filter((w) => {
             const current = changes.get(w.id) || attendance.get(w.id);
@@ -302,16 +302,16 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Batch Mark Buttons */}
-                <div className="flex gap-2 flex-wrap">
+                {/* Batch Mark Buttons - optimized for mobile */}
+                <div className="grid grid-cols-2 sm:flex gap-2 flex-wrap">
                   {STATUS_OPTIONS.map((option) => (
                     <button
                       key={`batch-${option.key}`}
                       onClick={() => handleBatchMark(team, option.key)}
                       disabled={batchMarking === team}
-                      className="px-4 py-2 bg-white text-primary hover:bg-blue-50 font-semibold rounded transition text-sm disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                      className="px-3 py-2 sm:px-4 sm:py-2 bg-white text-primary hover:bg-blue-50 font-semibold rounded transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {batchMarking === team ? "Đang xử lý..." : `Đánh dấu cả ${option.label}`}
+                      {batchMarking === team ? "Đang..." : `Đánh dấu ${option.label}`}
                     </button>
                   ))}
                 </div>
@@ -339,12 +339,13 @@ export default function HomePage() {
                         )}
                       </div>
 
-                      <div className="flex gap-2 flex-wrap">
+                      {/* Status buttons - optimized for mobile */}
+                      <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-2 sm:flex-wrap">
                         {STATUS_OPTIONS.map((option) => (
                           <button
                             key={option.key}
                             onClick={() => handleStatusChange(worker.id, option.key)}
-                            className={`px-2 py-1 rounded font-semibold transition text-xs ${
+                            className={`px-3 py-2 sm:px-4 sm:py-2 rounded font-semibold transition text-sm sm:text-base ${
                               current?.status === option.key
                                 ? "bg-accent text-white"
                                 : "bg-gray-200 text-gray-800 hover:bg-gray-300"
@@ -356,16 +357,16 @@ export default function HomePage() {
                       </div>
 
                       {current?.status === "present" && (
-                        <div className="mt-2 flex gap-2">
+                        <div className="mt-3 flex flex-col sm:flex-row gap-2">
                           <button
                             onClick={() => handleStatusChange(worker.id, "present", true)}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded font-semibold transition text-xs"
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded font-semibold transition text-base"
                           >
                             {vi.attendance.checkIn}: {current.check_in || "---"}
                           </button>
                           <button
                             onClick={() => handleCheckOut(worker.id)}
-                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded font-semibold transition text-xs"
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded font-semibold transition text-base"
                           >
                             {vi.attendance.checkOut}: {current.check_out || "---"}
                           </button>
@@ -381,11 +382,11 @@ export default function HomePage() {
       </div>
 
       {changes.size > 0 && (
-        <div className="sticky-bottom">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg">
           <button
             onClick={saveAll}
             disabled={saving}
-            className="flex-1 bg-accent hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
           >
             {saving ? vi.common.saving + "..." : `${vi.common.saveAll} (${changes.size})`}
           </button>
