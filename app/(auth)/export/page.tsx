@@ -76,7 +76,7 @@ export default function ExportPage() {
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto p-4 lg:p-6 xl:p-8">
+    <div className="space-y-4 p-4 lg:p-6 xl:p-8">
       <div className="bg-white rounded-xl shadow-md p-4 lg:p-6">
         <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-6 lg:mb-8">
           {vi.export.title}

@@ -191,7 +191,7 @@ export default function ReportsPage() {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
 
   return (
-    <div className="space-y-4 max-w-full mx-auto p-4 lg:p-6 xl:p-8">
+    <div className="space-y-4 p-4 lg:p-6 xl:p-8">
       {/* Mobile Warning */}
       <div className="lg:hidden bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center">
         <div className="text-4xl mb-3">💻</div>

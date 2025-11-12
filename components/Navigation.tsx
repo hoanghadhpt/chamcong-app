@@ -33,7 +33,7 @@ export default function Navigation() {
 
   return (
     <nav className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white sticky top-0 z-50 shadow-xl border-b-2 border-accent/30">
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 xl:px-8 py-3">
+      <div className="px-4 lg:px-6 xl:px-8 py-3">
         {/* Header with Logo and Logout */}
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
