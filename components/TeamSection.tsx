@@ -64,7 +64,11 @@ export default function TeamSection({
   return (
     <div className={`bg-white rounded-xl shadow-md overflow-hidden ${className}`}>
       {/* Team Header */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-4">
+      <div className={`p-4 transition-all ${
+        isExpanded
+          ? "bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white"
+          : "bg-gradient-to-r from-beige-200 to-beige-100 text-warm-dark"
+      }`}>
         {/* Team Name & Toggle */}
         <button
           onClick={onToggleExpand}
@@ -74,7 +78,9 @@ export default function TeamSection({
             <span className="text-xl font-bold">{isExpanded ? "▼" : "▶"}</span>
             <div className="flex-1">
               <h3 className="text-lg font-bold">{teamName}</h3>
-              <p className="text-sm text-blue-200 mt-0.5">
+              <p className={`text-sm mt-0.5 ${
+                isExpanded ? "text-beige-100" : "text-warm-dark/70"
+              }`}>
                 {presentCount}/{workers.length} Có mặt
               </p>
             </div>
