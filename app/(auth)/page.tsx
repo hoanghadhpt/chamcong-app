@@ -340,7 +340,7 @@ export default function HomePage() {
       {/* Offline Indicator */}
       <OfflineIndicator />
 
-      <div className="space-y-4 pb-28 bg-gray-100 min-h-screen p-4">
+      <div className="space-y-4 pb-28 bg-beige-50 min-h-screen p-4">
         {/* Date Header */}
         <DateHeader
           selectedDate={selectedDate}

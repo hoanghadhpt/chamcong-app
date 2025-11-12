@@ -31,7 +31,7 @@ export default function Navigation() {
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-gray-800 to-gray-700 text-white sticky top-0 z-50 shadow-xl">
+    <nav className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white sticky top-0 z-50 shadow-xl border-b-2 border-accent/30">
       <div className="max-w-4xl mx-auto px-4 py-3">
         {/* Header with Logo and Logout */}
         <div className="flex items-center justify-between mb-3">
@@ -58,8 +58,8 @@ export default function Navigation() {
                 href={item.path}
                 className={`px-4 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap text-sm flex items-center gap-2 shadow-md ${
                   active
-                    ? "bg-blue-500 text-white scale-105"
-                    : "bg-gray-600 hover:bg-gray-500 active:bg-gray-700 text-gray-100"
+                    ? "bg-gradient-to-r from-accent to-accent-light text-white scale-105 shadow-accent/50"
+                    : "bg-beige-100/10 hover:bg-beige-100/20 active:bg-beige-100/30 text-beige-100 border border-beige-100/20"
                 }`}
               >
                 <span className="text-base">{item.icon}</span>

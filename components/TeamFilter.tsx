@@ -16,11 +16,11 @@ export default function TeamFilter({
   className = "",
 }: TeamFilterProps) {
   return (
-    <div className={`bg-white rounded-xl shadow-md p-4 ${className}`}>
+    <div className={`bg-gradient-to-br from-white to-beige-50 rounded-xl shadow-md border border-beige-200 p-4 ${className}`}>
       {/* Search Box */}
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg">
             🔍
           </span>
           <input
@@ -28,7 +28,7 @@ export default function TeamFilter({
             placeholder="Tìm tổ, tên hoặc mã NV..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-base transition-all"
+            className="w-full pl-10 pr-4 py-3 border-2 border-beige-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-base transition-all hover:border-accent-light"
           />
         </div>
 
@@ -36,7 +36,7 @@ export default function TeamFilter({
         <button
           onClick={onExpandAll}
           title="Mở rộng tất cả"
-          className="p-3 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 active:bg-blue-300 transition-all font-bold text-base min-w-[48px] shadow-sm"
+          className="p-3 bg-gradient-to-br from-accent-light to-accent text-white rounded-xl hover:shadow-lg active:scale-95 transition-all font-bold text-base min-w-[48px] shadow-md"
           aria-label="Mở rộng tất cả"
         >
           ▼
@@ -44,7 +44,7 @@ export default function TeamFilter({
         <button
           onClick={onCollapseAll}
           title="Thu gọn tất cả"
-          className="p-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 active:bg-gray-300 transition-all font-bold text-base min-w-[48px] shadow-sm"
+          className="p-3 bg-beige-100 text-warm-dark rounded-xl hover:bg-beige-200 active:scale-95 transition-all font-bold text-base min-w-[48px] shadow-md border border-beige-200"
           aria-label="Thu gọn tất cả"
         >
           ▶
