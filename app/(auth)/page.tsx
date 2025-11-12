@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Toast from "@/components/Toast";
+import DateHeader from "@/components/DateHeader";
+import TeamFilter from "@/components/TeamFilter";
+import TeamSection from "@/components/TeamSection";
+import BottomSaveBar from "@/components/BottomSaveBar";
+import OfflineIndicator from "@/components/OfflineIndicator";
 import { getOfflineQueue, addToQueue, removeFromQueue } from "@/lib/offlineQueue";
-import { vi, formatDate, getCurrentTime } from "@/lib/i18n";
+import { vi, getCurrentTime } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -22,15 +27,6 @@ interface AttendanceRecord {
   check_out: string | null;
   shift_amount?: number;
 }
-
-const STATUS_OPTIONS = [
-  { key: "present", label: vi.attendance.statusPresent },
-  { key: "absent", label: vi.attendance.statusAbsent },
-  { key: "leave_paid", label: vi.attendance.statusLeavePaid },
-  { key: "leave_unpaid", label: vi.attendance.statusLeaveUnpaid },
-  { key: "sick", label: vi.attendance.statusSick },
-  { key: "ot", label: vi.attendance.statusOT },
-];
 
 // Get unique teams and group workers by team
 const groupWorkersByTeam = (workers: Worker[]): Map<string, Worker[]> => {
@@ -66,8 +62,6 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-
-  const today = new Date().toISOString().split("T")[0];
 
   // Toggle team expansion
   const toggleTeamExpanded = (team: string) => {
@@ -224,7 +218,15 @@ export default function HomePage() {
           setAttendance(attendanceMap);
         }
 
-        const statusLabel = STATUS_OPTIONS.find((o) => o.key === status)?.label || status;
+        const statusLabels: Record<string, string> = {
+          present: "Có mặt",
+          absent: "Vắng",
+          leave_paid: "Phép có lương",
+          leave_unpaid: "Phép không lương",
+          sick: "Ốm",
+          ot: "Tăng ca",
+        };
+        const statusLabel = statusLabels[status] || status;
         setToast({
           message: `Đã đánh dấu ${result.updated} nhân viên tổ ${teamName} là ${statusLabel}`,
         });
@@ -315,247 +317,85 @@ export default function HomePage() {
     }
   };
 
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setChanges(new Map()); // Clear unsaved changes when changing date
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-600">{vi.common.loading}...</p>
+        <div className="text-center">
+          <div className="text-4xl mb-3">⏳</div>
+          <p className="text-gray-600 font-medium">{vi.common.loading}...</p>
+        </div>
       </div>
     );
   }
 
+  const filteredTeams = getFilteredTeams();
+
   return (
-    <div className="space-y-4 pb-24">
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-2xl font-bold text-primary mb-4">{vi.attendance.title}</h2>
+    <>
+      {/* Offline Indicator */}
+      <OfflineIndicator />
 
-        {/* Date selector */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {vi.attendance.dateLabel}
-          </label>
-          <div className="flex gap-2 items-center">
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                setChanges(new Map()); // Clear unsaved changes when changing date
-              }}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
-            />
-            {selectedDate === today && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-3 py-2 rounded-lg font-semibold">
-                {vi.attendance.today}
-              </span>
-            )}
-          </div>
-        </div>
+      <div className="space-y-4 pb-28 bg-gray-100 min-h-screen p-4">
+        {/* Date Header */}
+        <DateHeader
+          selectedDate={selectedDate}
+          onDateChange={handleDateChange}
+        />
 
-        <p className="text-gray-600">
-          {new Date(selectedDate).toLocaleDateString("vi-VN", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
-      </div>
+        {/* Team Filter / Search */}
+        <TeamFilter
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onExpandAll={() => setExpandedTeams(new Set(filteredTeams.keys()))}
+          onCollapseAll={() => setExpandedTeams(new Set())}
+        />
 
-      {/* Search input with expand/collapse controls */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex gap-2 items-center mb-3">
-          <input
-            type="text"
-            placeholder={`${vi.attendance.search}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
-          />
-          <button
-            onClick={() => {
-              const teamsMap = getFilteredTeams();
-              setExpandedTeams(new Set(teamsMap.keys()));
-            }}
-            title="Mở rộng tất cả"
-            className="px-3 py-3 bg-blue-100 text-primary rounded-lg hover:bg-blue-200 transition font-semibold text-sm"
-          >
-            ▼
-          </button>
-          <button
-            onClick={() => setExpandedTeams(new Set())}
-            title="Thu gọn tất cả"
-            className="px-3 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold text-sm"
-          >
-            ▶
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-3 sm:pb-0">
-        {(() => {
-          const filteredTeams = getFilteredTeams();
-
-          if (filteredTeams.size === 0) {
-            return (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                <p className="text-yellow-800">
-                  {searchQuery
-                    ? `Không tìm thấy tổ hoặc nhân viên phù hợp với "${searchQuery}"`
-                    : "Không có tổ nào"}
-                </p>
-              </div>
-            );
-          }
-
-          return Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => {
-            const isExpanded = expandedTeams.has(team);
-            const presentCount = teamWorkers.filter((w) => {
-              const current = changes.get(w.id) || attendance.get(w.id);
-              return current?.status === "present";
-            }).length;
-
-          return (
-            <div key={team} className="bg-white rounded-lg shadow overflow-hidden">
-              {/* Team Header */}
-              <div className="bg-gradient-to-r from-primary to-blue-800 text-white p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={() => toggleTeamExpanded(team)}
-                    className="flex-1 text-left hover:opacity-80 transition"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{isExpanded ? "▼" : "▶"}</span>
-                      <div>
-                        <h3 className="text-lg font-bold">{team}</h3>
-                        <p className="text-sm text-blue-100">
-                          {presentCount}/{teamWorkers.length} {vi.attendance.statusPresent}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Batch Mark Buttons - optimized for mobile */}
-                <div className="grid grid-cols-2 sm:flex gap-2 flex-wrap">
-                  {STATUS_OPTIONS.map((option) => (
-                    <button
-                      key={`batch-${option.key}`}
-                      onClick={() => handleBatchMark(team, option.key)}
-                      disabled={batchMarking === team}
-                      className="px-3 py-2 sm:px-4 sm:py-2 bg-white text-primary hover:bg-blue-50 font-semibold rounded transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {batchMarking === team ? "Đang..." : `Đánh dấu ${option.label}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Team Workers - shown only when expanded */}
-              {isExpanded && (
-                <div className="space-y-2 p-4 border-t border-gray-100">
-                  {teamWorkers.map((worker) => {
-                  const current = changes.get(worker.id) || attendance.get(worker.id);
-
-                  return (
-                    <div
-                      key={worker.id}
-                      className="bg-gray-50 rounded-lg p-3 border-l-4 border-accent"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-bold text-base">{worker.name}</p>
-                          <p className="text-xs text-gray-600">{worker.code}</p>
-                        </div>
-                        {current?.status && (
-                          <span className="text-xs font-semibold px-2 py-1 bg-accent text-white rounded">
-                            {STATUS_OPTIONS.find((o) => o.key === current.status)?.label}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Status buttons - optimized for mobile */}
-                      <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-2 sm:flex-wrap">
-                        {STATUS_OPTIONS.map((option) => (
-                          <button
-                            key={option.key}
-                            onClick={() => handleStatusChange(worker.id, option.key, false, current?.shift_amount || 1.0)}
-                            className={`px-3 py-2 sm:px-4 sm:py-2 rounded font-semibold transition text-sm sm:text-base ${
-                              current?.status === option.key
-                                ? "bg-accent text-white"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Half-day selector for leave/absence statuses */}
-                      {(current?.status === "leave_paid" || current?.status === "leave_unpaid" || current?.status === "sick" || current?.status === "absent") && (
-                        <div className="mt-2 flex gap-2">
-                          <button
-                            onClick={() => handleStatusChange(worker.id, current.status || "absent", false, 1.0)}
-                            className={`flex-1 px-3 py-2 rounded font-semibold transition text-sm ${
-                              (current?.shift_amount || 1.0) === 1.0
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                          >
-                            {vi.attendance.fullDay}
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(worker.id, current.status || "absent", false, 0.5)}
-                            className={`flex-1 px-3 py-2 rounded font-semibold transition text-sm ${
-                              (current?.shift_amount || 1.0) === 0.5
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                            }`}
-                          >
-                            {vi.attendance.halfDay}
-                          </button>
-                        </div>
-                      )}
-
-                      {current?.status === "present" && (
-                        <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                          <button
-                            onClick={() => handleStatusChange(worker.id, "present", true, current?.shift_amount || 1.0)}
-                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded font-semibold transition text-base"
-                          >
-                            {vi.attendance.checkIn}: {current.check_in || "---"}
-                          </button>
-                          <button
-                            onClick={() => handleCheckOut(worker.id)}
-                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded font-semibold transition text-base"
-                          >
-                            {vi.attendance.checkOut}: {current.check_out || "---"}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                </div>
-              )}
+        {/* Team Sections */}
+        <div className="space-y-3">
+          {filteredTeams.size === 0 ? (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center">
+              <div className="text-3xl mb-2">🔍</div>
+              <p className="text-yellow-800 font-medium">
+                {searchQuery
+                  ? `Không tìm thấy tổ hoặc nhân viên phù hợp với "${searchQuery}"`
+                  : "Không có tổ nào"}
+              </p>
             </div>
-          );
-          });
-        })()}
-      </div>
-
-      {changes.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg">
-          <button
-            onClick={saveAll}
-            disabled={saving}
-            className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-          >
-            {saving ? vi.common.saving + "..." : `${vi.common.saveAll} (${changes.size})`}
-          </button>
+          ) : (
+            Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => (
+              <TeamSection
+                key={team}
+                teamName={team}
+                workers={teamWorkers}
+                attendance={attendance}
+                changes={changes}
+                isExpanded={expandedTeams.has(team)}
+                onToggleExpand={() => toggleTeamExpanded(team)}
+                onStatusChange={handleStatusChange}
+                onCheckOut={handleCheckOut}
+                onBatchMark={handleBatchMark}
+                batchMarking={batchMarking}
+              />
+            ))
+          )}
         </div>
-      )}
 
-      {toast && <Toast message={toast.message} offline={toast.offline} />}
-    </div>
+        {/* Bottom Save Bar */}
+        <BottomSaveBar
+          visible={true}
+          changeCount={changes.size}
+          onSave={saveAll}
+          saving={saving}
+        />
+
+        {/* Toast Notification */}
+        {toast && <Toast message={toast.message} offline={toast.offline} />}
+      </div>
+    </>
   );
 }

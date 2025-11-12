@@ -24,53 +24,62 @@ export default function Navigation() {
 
   const isActive = (path: string) => pathname === path;
 
+  const navItems = [
+    { path: "/", label: "Chấm công", icon: "✅" },
+    { path: "/workers", label: "Nhân viên", icon: "👥" },
+    { path: "/export", label: "Xuất BC", icon: "📊" },
+  ];
+
   return (
-    <nav className="bg-primary text-white sticky top-0 z-50 shadow-lg">
-      <div className="max-w-4xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Chấm Công</h1>
+    <nav className="bg-gradient-to-r from-gray-800 to-gray-700 text-white sticky top-0 z-50 shadow-xl">
+      <div className="max-w-4xl mx-auto px-4 py-3">
+        {/* Header with Logo and Logout */}
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <span>📱</span>
+            <span>Chấm Công</span>
+          </h1>
           <button
             onClick={handleLogout}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-semibold transition disabled:opacity-50"
+            className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all disabled:opacity-50 shadow-md"
           >
-            {loading ? "Logging out..." : "Logout"}
+            {loading ? "⏳ Đang thoát..." : "🚪 Thoát"}
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto">
-          <Link
-            href="/"
-            className={`px-4 py-2 rounded font-semibold transition whitespace-nowrap ${
-              isActive("/")
-                ? "bg-accent text-white"
-                : "bg-gray-700 hover:bg-gray-600"
-            }`}
-          >
-            Attendance
-          </Link>
-          <Link
-            href="/workers"
-            className={`px-4 py-2 rounded font-semibold transition whitespace-nowrap ${
-              isActive("/workers")
-                ? "bg-accent text-white"
-                : "bg-gray-700 hover:bg-gray-600"
-            }`}
-          >
-            Workers
-          </Link>
-          <Link
-            href="/export"
-            className={`px-4 py-2 rounded font-semibold transition whitespace-nowrap ${
-              isActive("/export")
-                ? "bg-accent text-white"
-                : "bg-gray-700 hover:bg-gray-600"
-            }`}
-          >
-            Export
-          </Link>
+        {/* Navigation Tabs - Mobile First */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {navItems.map((item) => {
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`px-4 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap text-sm flex items-center gap-2 shadow-md ${
+                  active
+                    ? "bg-blue-500 text-white scale-105"
+                    : "bg-gray-600 hover:bg-gray-500 active:bg-gray-700 text-gray-100"
+                }`}
+              >
+                <span className="text-base">{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </div>
+
+      {/* Hide scrollbar for horizontal scroll on mobile */}
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </nav>
   );
 }
