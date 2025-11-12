@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWorkersByManagerId, workersToCSV } from "@/lib/workers";
+import { getWorkersByManagerId, workersToExcel } from "@/lib/workers";
 import { getUserIdFromSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -16,12 +16,15 @@ export async function GET(request: NextRequest) {
     }
 
     const workers = getWorkersByManagerId(userId);
-    const csv = workersToCSV(workers);
+    const buffer = await workersToExcel(workers);
 
-    const response = new NextResponse(csv, {
+    // Get current date for filename
+    const date = new Date().toISOString().split("T")[0];
+
+    const response = new NextResponse(buffer as unknown as BodyInit, {
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="workers.csv"',
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="danh_sach_nhan_vien_${date}.xlsx"`,
       },
     });
 
