@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { vi } from "@/lib/i18n";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Registration failed");
+        setError(data.error || vi.auth.registerError);
         return;
       }
 
@@ -42,7 +43,7 @@ export default function RegisterPage() {
         router.refresh();
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError(vi.auth.errorOccurred);
     } finally {
       setLoading(false);
     }
@@ -54,26 +55,26 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-bold text-center text-primary mb-2">
           Chấm Công
         </h1>
-        <p className="text-center text-gray-600 mb-8">Create your account</p>
+        <p className="text-center text-gray-600 mb-8">{vi.auth.createAccount}</p>
 
         <form onSubmit={handleRegister} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Display Name
+              {vi.auth.displayName}
             </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
-              placeholder="Factory Manager"
+              placeholder="Quản lý nhà máy"
               required
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              {vi.auth.email}
             </label>
             <input
               type="email"
@@ -87,7 +88,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              {vi.auth.password}
             </label>
             <input
               type="password"
@@ -110,14 +111,14 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-base"
           >
-            {loading ? "Creating account..." : "Register"}
+            {loading ? vi.auth.creatingAccount + "..." : vi.auth.register}
           </button>
         </form>
 
         <p className="text-center text-gray-600 mt-6">
-          Already have an account?{" "}
+          {vi.auth.haveAccount}{" "}
           <Link href="/login" className="text-accent font-bold hover:underline">
-            Login here
+            {vi.auth.loginHere}
           </Link>
         </p>
       </div>

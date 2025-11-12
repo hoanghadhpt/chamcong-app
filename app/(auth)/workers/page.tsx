@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Toast from "@/components/Toast";
+import { vi } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -42,7 +43,7 @@ export default function WorkersPage() {
       }
     } catch (error) {
       console.error("Error fetching workers:", error);
-      setToast("Failed to load workers");
+      setToast(vi.common.loadError);
     } finally {
       setLoading(false);
     }
@@ -69,10 +70,10 @@ export default function WorkersPage() {
           setWorkers(
             workers.map((w) => (w.id === editingId ? updated : w))
           );
-          setToast("Worker updated successfully");
+          setToast(vi.workers.updateSuccess);
         } else {
           const data = await response.json();
-          setToast(data.error || "Failed to update worker");
+          setToast(data.error || vi.workers.updateError);
         }
       } else {
         const response = await fetch("/api/workers", {
@@ -84,10 +85,10 @@ export default function WorkersPage() {
         if (response.ok) {
           const newWorker = await response.json();
           setWorkers([...workers, newWorker]);
-          setToast("Worker added successfully");
+          setToast(vi.workers.addSuccess);
         } else {
           const data = await response.json();
-          setToast(data.error || "Failed to add worker");
+          setToast(data.error || vi.workers.addError);
         }
       }
 
@@ -96,7 +97,7 @@ export default function WorkersPage() {
       setEditingId(null);
     } catch (error) {
       console.error("Error saving worker:", error);
-      setToast("An error occurred while saving");
+      setToast(vi.common.saveError);
     } finally {
       setSaving(false);
     }
@@ -114,7 +115,7 @@ export default function WorkersPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure?")) return;
+    if (!confirm(vi.common.confirmDelete)) return;
 
     try {
       const response = await fetch(`/api/workers?id=${id}`, {
@@ -123,13 +124,13 @@ export default function WorkersPage() {
 
       if (response.ok) {
         setWorkers(workers.filter((w) => w.id !== id));
-        setToast("Worker deleted successfully");
+        setToast(vi.workers.deleteSuccess);
       } else {
-        setToast("Failed to delete worker");
+        setToast(vi.workers.deleteError);
       }
     } catch (error) {
       console.error("Error deleting worker:", error);
-      setToast("An error occurred while deleting");
+      setToast(vi.common.deleteError);
     }
   };
 
@@ -149,20 +150,17 @@ export default function WorkersPage() {
 
       if (response.ok) {
         const result = await response.json();
-        setToast(
-          `Imported ${result.imported} workers${
-            result.errors.length > 0
-              ? ` (${result.errors.length} errors)`
-              : ""
-          }`
-        );
+        const message = result.errors.length > 0
+          ? vi.workers.importPartial.replace("{count}", result.imported.toString()).replace("{errors}", result.errors.length.toString())
+          : vi.workers.importSuccess.replace("{count}", result.imported.toString());
+        setToast(message);
         fetchWorkers();
       } else {
-        setToast("Failed to import workers");
+        setToast(vi.workers.importError);
       }
     } catch (error) {
       console.error("Error importing:", error);
-      setToast("An error occurred during import");
+      setToast(vi.common.importError);
     } finally {
       setSaving(false);
       if (fileInputRef.current) {
@@ -179,23 +177,23 @@ export default function WorkersPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `workers_${new Date().toISOString().split("T")[0]}.csv`;
+        a.download = `nhan_vien_${new Date().toISOString().split("T")[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        setToast("Workers exported successfully");
+        setToast(vi.workers.exportSuccess);
       }
     } catch (error) {
       console.error("Error exporting:", error);
-      setToast("Failed to export workers");
+      setToast(vi.workers.exportError);
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600">{vi.common.loading}...</p>
       </div>
     );
   }
@@ -203,7 +201,7 @@ export default function WorkersPage() {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-2xl font-bold text-primary mb-4">Manage Workers</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">{vi.workers.title}</h2>
 
         <div className="flex gap-2 flex-wrap mb-4">
           <button
@@ -214,7 +212,7 @@ export default function WorkersPage() {
             }}
             className="bg-accent hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition"
           >
-            {showForm && !editingId ? "Cancel" : "Add Worker"}
+            {showForm && !editingId ? vi.common.cancel : vi.workers.add}
           </button>
 
           <button
@@ -222,14 +220,14 @@ export default function WorkersPage() {
             disabled={saving}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold transition disabled:opacity-50"
           >
-            Import CSV
+            {vi.workers.import}
           </button>
 
           <button
             onClick={handleExport}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition"
           >
-            Export CSV
+            {vi.workers.export}
           </button>
 
           <input
@@ -246,7 +244,7 @@ export default function WorkersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 type="text"
-                placeholder="Worker Code"
+                placeholder={vi.workers.code}
                 value={formData.code}
                 onChange={(e) =>
                   setFormData({ ...formData, code: e.target.value })
@@ -256,7 +254,7 @@ export default function WorkersPage() {
               />
               <input
                 type="text"
-                placeholder="Name"
+                placeholder={vi.workers.name}
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -266,7 +264,7 @@ export default function WorkersPage() {
               />
               <input
                 type="tel"
-                placeholder="Phone"
+                placeholder={vi.workers.phone}
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
@@ -275,7 +273,7 @@ export default function WorkersPage() {
               />
               <input
                 type="text"
-                placeholder="Team"
+                placeholder={vi.workers.team}
                 value={formData.team}
                 onChange={(e) =>
                   setFormData({ ...formData, team: e.target.value })
@@ -289,7 +287,7 @@ export default function WorkersPage() {
               disabled={saving}
               className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-2 rounded transition disabled:opacity-50"
             >
-              {saving ? "Saving..." : editingId ? "Update Worker" : "Add Worker"}
+              {saving ? vi.common.saving + "..." : editingId ? vi.workers.update : vi.workers.add}
             </button>
           </form>
         )}
@@ -298,7 +296,7 @@ export default function WorkersPage() {
       <div className="space-y-2">
         {workers.length === 0 ? (
           <div className="text-center py-8 text-gray-600">
-            No workers yet. Add your first worker!
+            {vi.workers.emptyState}
           </div>
         ) : (
           workers.map((worker) => (
@@ -309,7 +307,7 @@ export default function WorkersPage() {
               <div>
                 <p className="font-bold">{worker.name}</p>
                 <p className="text-sm text-gray-600">
-                  {worker.code} | {worker.team || "No team"}
+                  {worker.code} | {worker.team || vi.workers.noTeam}
                 </p>
                 {worker.phone && (
                   <p className="text-sm text-gray-600">{worker.phone}</p>
@@ -321,13 +319,13 @@ export default function WorkersPage() {
                   onClick={() => handleEdit(worker)}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold transition"
                 >
-                  Edit
+                  {vi.common.edit}
                 </button>
                 <button
                   onClick={() => handleDelete(worker.id)}
                   className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm font-semibold transition"
                 >
-                  Delete
+                  {vi.common.delete}
                 </button>
               </div>
             </div>

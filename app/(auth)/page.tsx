@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Toast from "@/components/Toast";
 import { getOfflineQueue, addToQueue, removeFromQueue } from "@/lib/offlineQueue";
+import { vi, formatDate, getCurrentTime } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -21,7 +22,14 @@ interface AttendanceRecord {
   check_out: string | null;
 }
 
-const STATUS_OPTIONS = ["present", "absent", "leave", "ot"];
+const STATUS_OPTIONS = [
+  { key: "present", label: vi.attendance.statusPresent },
+  { key: "absent", label: vi.attendance.statusAbsent },
+  { key: "leave_paid", label: vi.attendance.statusLeavePaid },
+  { key: "leave_unpaid", label: vi.attendance.statusLeaveUnpaid },
+  { key: "sick", label: vi.attendance.statusSick },
+  { key: "ot", label: vi.attendance.statusOT },
+];
 
 export default function HomePage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -96,7 +104,7 @@ export default function HomePage() {
       work_date: today,
       status: status,
       check_in: isCheckIn
-        ? new Date().toLocaleTimeString()
+        ? getCurrentTime()
         : existing?.check_in || null,
       check_out: existing?.check_out || null,
     };
@@ -114,7 +122,7 @@ export default function HomePage() {
       work_date: today,
       status: existing?.status || "present",
       check_in: existing?.check_in || null,
-      check_out: new Date().toLocaleTimeString(),
+      check_out: getCurrentTime(),
     };
 
     const newChanges = new Map(changes);
@@ -124,7 +132,7 @@ export default function HomePage() {
 
   const saveAll = async () => {
     if (changes.size === 0) {
-      setToast({ message: "No changes to save" });
+      setToast({ message: vi.common.noChanges });
       return;
     }
 
@@ -183,22 +191,22 @@ export default function HomePage() {
 
     if (failed > 0 && !isOnline) {
       setToast({
-        message: `Saved ${saved} records. ${failed} queued (offline – will sync)`,
+        message: vi.common.savedQueued.replace("{saved}", saved.toString()).replace("{failed}", failed.toString()),
         offline: true,
       });
     } else if (saved > 0) {
-      setToast({ message: `Saved ${saved} records successfully` });
+      setToast({ message: vi.common.savedSuccess.replace("{count}", saved.toString()) });
     }
 
     if (failed > 0 && isOnline) {
-      setToast({ message: `${failed} records failed to save` });
+      setToast({ message: vi.common.saveFailed.replace("{count}", failed.toString()) });
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-600">Loading...</p>
+        <p className="text-gray-600">{vi.common.loading}...</p>
       </div>
     );
   }
@@ -206,9 +214,9 @@ export default function HomePage() {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-2xl font-bold text-primary mb-2">Daily Attendance</h2>
+        <h2 className="text-2xl font-bold text-primary mb-2">{vi.attendance.title}</h2>
         <p className="text-gray-600">
-          {new Date(today).toLocaleDateString("en-US", {
+          {new Date(today).toLocaleDateString("vi-VN", {
             weekday: "long",
             year: "numeric",
             month: "long",
@@ -236,17 +244,17 @@ export default function HomePage() {
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {STATUS_OPTIONS.map((status) => (
+                {STATUS_OPTIONS.map((option) => (
                   <button
-                    key={status}
-                    onClick={() => handleStatusChange(worker.id, status)}
+                    key={option.key}
+                    onClick={() => handleStatusChange(worker.id, option.key)}
                     className={`px-4 py-2 rounded font-semibold transition uppercase text-sm ${
-                      current?.status === status
+                      current?.status === option.key
                         ? "bg-accent text-white"
                         : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                     }`}
                   >
-                    {status}
+                    {option.label}
                   </button>
                 ))}
               </div>
@@ -257,13 +265,13 @@ export default function HomePage() {
                     onClick={() => handleStatusChange(worker.id, "present", true)}
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded font-semibold transition text-sm"
                   >
-                    Check In: {current.check_in || "---"}
+                    {vi.attendance.checkIn}: {current.check_in || "---"}
                   </button>
                   <button
                     onClick={() => handleCheckOut(worker.id)}
                     className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded font-semibold transition text-sm"
                   >
-                    Check Out: {current.check_out || "---"}
+                    {vi.attendance.checkOut}: {current.check_out || "---"}
                   </button>
                 </div>
               )}
@@ -279,7 +287,7 @@ export default function HomePage() {
             disabled={saving}
             className="flex-1 bg-accent hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? "Saving..." : `Save All (${changes.size})`}
+            {saving ? vi.common.saving + "..." : `${vi.common.saveAll} (${changes.size})`}
           </button>
         </div>
       )}

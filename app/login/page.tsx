@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { vi } from "@/lib/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,14 +26,14 @@ export default function LoginPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        setError(data.error || "Login failed");
+        setError(data.error || vi.auth.loginError);
         return;
       }
 
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      setError(vi.auth.errorOccurred);
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
+              {vi.auth.email}
             </label>
             <input
               type="email"
@@ -62,7 +63,7 @@ export default function LoginPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              {vi.auth.password}
             </label>
             <input
               type="password"
@@ -85,14 +86,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed text-base"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? vi.auth.loggingIn + "..." : vi.auth.login}
           </button>
         </form>
 
         <p className="text-center text-gray-600 mt-6">
-          Don't have an account?{" "}
+          {vi.auth.noAccount}{" "}
           <Link href="/register" className="text-accent font-bold hover:underline">
-            Register here
+            {vi.auth.registerHere}
           </Link>
         </p>
       </div>
