@@ -136,7 +136,7 @@ export async function generateMatrixExcel(
   attendanceData: { [key: string]: string | { status: string; shiftAmount?: number } } // key: "worker_id:YYYY-MM-DD", value: status code or object with status and shiftAmount
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet(`${month}/${year}`);
+  const worksheet = workbook.addWorksheet(`Thang ${month}-${year}`);
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const startDate = new Date(year, month - 1, 1);
