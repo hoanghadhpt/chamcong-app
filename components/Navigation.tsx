@@ -53,11 +53,15 @@ export default function Navigation() {
         <div className="flex gap-2 overflow-x-auto lg:overflow-x-visible lg:justify-center pb-1 scrollbar-hide">
           {navItems.map((item) => {
             const active = isActive(item.path);
+            // Hide "Báo cáo" on mobile (desktop only)
+            const isReportsPage = item.path === "/reports";
+            const responsiveClass = isReportsPage ? "hidden lg:flex" : "flex";
+
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl font-bold transition-all whitespace-nowrap text-sm lg:text-base flex items-center gap-2 shadow-md ${
+                className={`${responsiveClass} px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl font-bold transition-all whitespace-nowrap text-sm lg:text-base items-center gap-2 shadow-md ${
                   active
                     ? "bg-gradient-to-r from-accent to-accent-light text-white scale-105 shadow-accent/50"
                     : "bg-beige-100/10 hover:bg-beige-100/20 active:bg-beige-100/30 text-beige-100 border border-beige-100/20"
