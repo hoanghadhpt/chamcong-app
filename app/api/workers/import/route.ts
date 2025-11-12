@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { importWorkers, parseCSV } from "@/lib/workers";
+import { getUserIdFromSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const formData = await request.formData();
@@ -22,7 +28,7 @@ export async function POST(request: NextRequest) {
     const content = await file.text();
     const records = parseCSV(content);
 
-    const result = importWorkers(parseInt(userId), records as any);
+    const result = importWorkers(userId, records as any);
 
     return NextResponse.json(result);
   } catch (error) {

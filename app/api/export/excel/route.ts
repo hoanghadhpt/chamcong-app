@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAttendanceExcel } from "@/lib/excel";
 import { getAttendanceByDateRange } from "@/lib/attendance";
+import { getUserIdFromSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const { fromDate, toDate } = await request.json();
@@ -20,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const attendanceData = getAttendanceByDateRange(
-      parseInt(userId),
+      userId,
       fromDate,
       toDate
     );

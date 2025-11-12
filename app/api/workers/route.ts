@@ -5,16 +5,22 @@ import {
   updateWorker,
   deleteWorker,
 } from "@/lib/workers";
+import { getUserIdFromSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workers = getWorkersByManagerId(parseInt(userId));
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    const workers = getWorkersByManagerId(userId);
     return NextResponse.json(workers);
   } catch (error) {
     console.error("Error fetching workers:", error);
@@ -27,10 +33,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const { code, name, phone, team } = await request.json();
@@ -43,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const worker = createWorker(
-      parseInt(userId),
+      userId,
       code,
       name,
       phone || null,
@@ -68,10 +79,15 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const { id, code, name, phone, team, active } = await request.json();
@@ -85,7 +101,7 @@ export async function PUT(request: NextRequest) {
 
     const worker = updateWorker(
       id,
-      parseInt(userId),
+      userId,
       code,
       name,
       phone || null,
@@ -105,10 +121,15 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -121,7 +142,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    deleteWorker(parseInt(workerId), parseInt(userId));
+    deleteWorker(parseInt(workerId), userId);
 
     return NextResponse.json({ message: "Worker deleted successfully" });
   } catch (error) {

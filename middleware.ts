@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "./lib/auth";
 
 export function middleware(request: NextRequest) {
   // Allow public routes
@@ -9,12 +8,14 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname === "/manifest.webmanifest" ||
     request.nextUrl.pathname.startsWith("/api/auth/") ||
     request.nextUrl.pathname.startsWith("/_next") ||
-    request.nextUrl.pathname.startsWith("/sw.js")
+    request.nextUrl.pathname.startsWith("/sw.js") ||
+    request.nextUrl.pathname.startsWith("/public")
   ) {
     return NextResponse.next();
   }
 
-  // Check session for protected routes
+  // Check session cookie existence for protected routes
+  // (actual validation happens in API routes to avoid DB calls in edge runtime)
   const sessionId = request.cookies.get("sid")?.value;
 
   if (!sessionId) {
@@ -24,20 +25,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const session = getSession(sessionId);
-
-  if (!session) {
-    if (request.nextUrl.pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Session expired" }, { status: 401 });
-    }
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.delete("sid");
-    return response;
-  }
-
-  // Add user ID to headers
+  // Pass session ID to route handlers for validation
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-user-id", session.user_id.toString());
+  requestHeaders.set("x-session-id", sessionId);
 
   return NextResponse.next({
     request: {
@@ -52,7 +42,8 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - public (public files)
      * - favicon.ico (favicon file)
+     * - .next internal files
      */
-    "/((?!public|favicon.ico).*)",
+    "/((?!public|favicon.ico|_next|.*\\..*|sw\\.js).*)",
   ],
 };

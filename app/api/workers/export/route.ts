@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWorkersByManagerId, workersToCSV } from "@/lib/workers";
+import { getUserIdFromSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workers = getWorkersByManagerId(parseInt(userId));
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
+    }
+
+    const workers = getWorkersByManagerId(userId);
     const csv = workersToCSV(workers);
 
     const response = new NextResponse(csv, {

@@ -97,3 +97,12 @@ export function deleteSession(sessionId: string): void {
   const db = getDB();
   db.prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
 }
+
+/**
+ * Get user ID from a valid session ID.
+ * Returns null if session is invalid or expired.
+ */
+export function getUserIdFromSession(sessionId: string): number | null {
+  const session = getSession(sessionId);
+  return session ? session.user_id : null;
+}

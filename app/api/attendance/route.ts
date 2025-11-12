@@ -4,13 +4,19 @@ import {
   getAttendanceByDate,
   upsertAttendance,
 } from "@/lib/attendance";
+import { getUserIdFromSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -21,9 +27,9 @@ export async function GET(request: NextRequest) {
     let records;
 
     if (date) {
-      records = getAttendanceByDate(parseInt(userId), date);
+      records = getAttendanceByDate(userId, date);
     } else if (fromDate && toDate) {
-      records = getAttendanceByDateRange(parseInt(userId), fromDate, toDate);
+      records = getAttendanceByDateRange(userId, fromDate, toDate);
     } else {
       return NextResponse.json(
         { error: "Please provide date or date range (from/to)" },
@@ -43,10 +49,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
+    const sessionId = request.headers.get("x-session-id");
 
-    if (!userId) {
+    if (!sessionId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = getUserIdFromSession(sessionId);
+    if (!userId) {
+      return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
     const { workerId, workDate, status, checkIn, checkOut, note } =
@@ -60,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     const record = upsertAttendance(
-      parseInt(userId),
+      userId,
       workerId,
       workDate,
       status,
