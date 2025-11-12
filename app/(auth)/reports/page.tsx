@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Toast from "@/components/Toast";
 import AttendanceStatusChip from "@/components/AttendanceStatusChip";
 import { vi } from "@/lib/i18n";
@@ -47,60 +47,60 @@ export default function ReportsPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
 
   // Fetch data
-  const fetchData = useCallback(async () => {
-    console.log("Fetching data for range:", fromDate, "to", toDate);
-    setLoading(true);
-    try {
-      const [workersRes, attendanceRes] = await Promise.all([
-        fetch("/api/workers"),
-        fetch(`/api/attendance/range?fromDate=${fromDate}&toDate=${toDate}`),
-      ]);
-
-      // Parse workers data once
-      let workersData: Worker[] = [];
-      if (workersRes.ok) {
-        workersData = await workersRes.json();
-        const activeWorkers = workersData.filter((w: Worker) => w.active === 1);
-        console.log("Workers fetched:", workersData.length, "active:", activeWorkers.length);
-        setWorkers(activeWorkers);
-      } else {
-        console.error("Failed to fetch workers:", workersRes.status);
-      }
-
-      if (attendanceRes.ok) {
-        const attendanceRecords: AttendanceRecord[] = await attendanceRes.json();
-        console.log("Attendance records fetched:", attendanceRecords.length);
-
-        // Merge with worker data
-        const workersMap = new Map<number, Worker>();
-        workersData.forEach((w: Worker) => workersMap.set(w.id, w));
-
-        const merged: AttendanceWithWorker[] = attendanceRecords.map((record) => {
-          const worker = workersMap.get(record.worker_id);
-          return {
-            ...record,
-            worker_code: worker?.code || "---",
-            worker_name: worker?.name || "---",
-            worker_team: worker?.team || null,
-          };
-        });
-
-        console.log("Merged attendance data:", merged.length);
-        setAttendanceData(merged);
-      } else {
-        console.error("Failed to fetch attendance:", attendanceRes.status);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setToast("Lỗi khi tải dữ liệu");
-    } finally {
-      setLoading(false);
-    }
-  }, [fromDate, toDate]);
-
   useEffect(() => {
+    const fetchData = async () => {
+      console.log("Fetching data for range:", fromDate, "to", toDate);
+      setLoading(true);
+      try {
+        const [workersRes, attendanceRes] = await Promise.all([
+          fetch("/api/workers"),
+          fetch(`/api/attendance/range?fromDate=${fromDate}&toDate=${toDate}`),
+        ]);
+
+        // Parse workers data once
+        let workersData: Worker[] = [];
+        if (workersRes.ok) {
+          workersData = await workersRes.json();
+          const activeWorkers = workersData.filter((w: Worker) => w.active === 1);
+          console.log("Workers fetched:", workersData.length, "active:", activeWorkers.length);
+          setWorkers(activeWorkers);
+        } else {
+          console.error("Failed to fetch workers:", workersRes.status);
+        }
+
+        if (attendanceRes.ok) {
+          const attendanceRecords: AttendanceRecord[] = await attendanceRes.json();
+          console.log("Attendance records fetched:", attendanceRecords.length);
+
+          // Merge with worker data
+          const workersMap = new Map<number, Worker>();
+          workersData.forEach((w: Worker) => workersMap.set(w.id, w));
+
+          const merged: AttendanceWithWorker[] = attendanceRecords.map((record) => {
+            const worker = workersMap.get(record.worker_id);
+            return {
+              ...record,
+              worker_code: worker?.code || "---",
+              worker_name: worker?.name || "---",
+              worker_team: worker?.team || null,
+            };
+          });
+
+          console.log("Merged attendance data:", merged.length);
+          setAttendanceData(merged);
+        } else {
+          console.error("Failed to fetch attendance:", attendanceRes.status);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setToast("Lỗi khi tải dữ liệu");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
-  }, [fetchData]);
+  }, [fromDate, toDate]);
 
   // Export Excel
   const handleExport = async () => {
