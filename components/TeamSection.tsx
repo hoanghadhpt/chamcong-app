@@ -36,9 +36,9 @@ interface TeamSectionProps {
 }
 
 const BATCH_STATUS_OPTIONS = [
-  { key: "present", label: "Có mặt", color: "bg-green-500 hover:bg-green-600" },
-  { key: "absent", label: "Vắng", color: "bg-red-500 hover:bg-red-600" },
-  { key: "leave_paid", label: "Phép", color: "bg-blue-500 hover:bg-blue-600" },
+  { key: "present", label: "Có mặt", color: "bg-green-600 hover:bg-green-700" },
+  { key: "absent", label: "Vắng", color: "bg-red-600 hover:bg-red-700" },
+  { key: "leave_paid", label: "Phép", color: "bg-accent hover:bg-accent-light" },
 ];
 
 export default function TeamSection({
@@ -64,7 +64,7 @@ export default function TeamSection({
   return (
     <div className={`bg-white rounded-xl shadow-md overflow-hidden ${className}`}>
       {/* Team Header */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white p-4">
+      <div className="bg-gradient-to-r from-primary to-accent text-white p-4">
         {/* Team Name & Toggle */}
         <button
           onClick={onToggleExpand}
@@ -74,7 +74,7 @@ export default function TeamSection({
             <span className="text-xl font-bold">{isExpanded ? "▼" : "▶"}</span>
             <div className="flex-1">
               <h3 className="text-lg font-bold">{teamName}</h3>
-              <p className="text-sm text-blue-200 mt-0.5">
+              <p className="text-sm text-beige-100 mt-0.5">
                 {presentCount}/{workers.length} Có mặt
               </p>
             </div>

@@ -53,7 +53,7 @@ export default function WorkerRow({
     currentStatus === "absent";
 
   return (
-    <div className={`bg-gray-50 rounded-xl p-4 border-l-4 border-blue-500 shadow-sm ${className}`}>
+    <div className={`bg-gray-50 rounded-xl p-4 border-l-4 border-accent shadow-sm ${className}`}>
       {/* Worker Info Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -80,7 +80,7 @@ export default function WorkerRow({
               onClick={() => onStatusChange(worker.id, option.key, false, currentShiftAmount)}
               className={`px-2 py-2.5 rounded-lg font-semibold transition-all text-xs sm:text-sm flex flex-col items-center justify-center gap-1 ${
                 isActive
-                  ? "bg-blue-500 text-white shadow-md scale-105"
+                  ? "bg-accent text-white shadow-md scale-105"
                   : "bg-white text-gray-700 hover:bg-gray-100 active:bg-gray-200 border border-gray-300"
               }`}
             >
@@ -98,7 +98,7 @@ export default function WorkerRow({
             onClick={() => onStatusChange(worker.id, currentStatus || "absent", false, 1.0)}
             className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${
               currentShiftAmount === 1.0
-                ? "bg-blue-500 text-white shadow-md"
+                ? "bg-accent text-white shadow-md"
                 : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
             }`}
           >
@@ -108,7 +108,7 @@ export default function WorkerRow({
             onClick={() => onStatusChange(worker.id, currentStatus || "absent", false, 0.5)}
             className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all text-sm ${
               currentShiftAmount === 0.5
-                ? "bg-blue-500 text-white shadow-md"
+                ? "bg-accent text-white shadow-md"
                 : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
             }`}
           >

@@ -25,7 +25,7 @@ export default function BottomSaveBar({
         <button
           onClick={onSave}
           disabled={saving}
-          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-accent to-accent-light hover:from-accent-light hover:to-accent active:from-primary active:to-accent text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg flex items-center justify-center gap-2"
         >
           {saving ? (
             <>

@@ -36,7 +36,7 @@ export default function TeamFilter({
         <button
           onClick={onExpandAll}
           title="Mở rộng tất cả"
-          className="p-3 bg-blue-100 text-blue-700 rounded-xl hover:bg-blue-200 active:bg-blue-300 transition-all font-bold text-base min-w-[48px] shadow-sm"
+          className="p-3 bg-beige-100 text-primary rounded-xl hover:bg-beige-200 active:bg-beige-200/80 transition-all font-bold text-base min-w-[48px] shadow-sm"
           aria-label="Mở rộng tất cả"
         >
           ▼
