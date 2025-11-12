@@ -60,8 +60,54 @@ export default function HomePage() {
     new Map()
   );
   const [batchMarking, setBatchMarking] = useState<string | null>(null);
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const today = new Date().toISOString().split("T")[0];
+
+  // Toggle team expansion
+  const toggleTeamExpanded = (team: string) => {
+    const newExpanded = new Set(expandedTeams);
+    if (newExpanded.has(team)) {
+      newExpanded.delete(team);
+    } else {
+      newExpanded.add(team);
+    }
+    setExpandedTeams(newExpanded);
+  };
+
+  // Filter teams by search query
+  const getFilteredTeams = () => {
+    const teamsMap = groupWorkersByTeam(workers);
+    if (!searchQuery.trim()) {
+      return teamsMap;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = new Map<string, Worker[]>();
+
+    for (const [team, teamWorkers] of teamsMap.entries()) {
+      // Filter by team name or worker name/code
+      const matchingWorkers = teamWorkers.filter(
+        (w) =>
+          team.toLowerCase().includes(query) ||
+          w.name.toLowerCase().includes(query) ||
+          w.code.toLowerCase().includes(query)
+      );
+
+      if (
+        team.toLowerCase().includes(query) ||
+        matchingWorkers.length > 0
+      ) {
+        filtered.set(
+          team,
+          team.toLowerCase().includes(query) ? teamWorkers : matchingWorkers
+        );
+      }
+    }
+
+    return filtered;
+  };
 
   useEffect(() => {
     fetchData();
@@ -282,24 +328,78 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="space-y-6 sm:pb-0">
-        {Array.from(groupWorkersByTeam(workers).entries()).map(([team, teamWorkers]) => {
-          const presentCount = teamWorkers.filter((w) => {
-            const current = changes.get(w.id) || attendance.get(w.id);
-            return current?.status === "present";
-          }).length;
+      {/* Search input with expand/collapse controls */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex gap-2 items-center mb-3">
+          <input
+            type="text"
+            placeholder={`${vi.attendance.search}...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
+          />
+          <button
+            onClick={() => {
+              const teamsMap = getFilteredTeams();
+              setExpandedTeams(new Set(teamsMap.keys()));
+            }}
+            title="Mở rộng tất cả"
+            className="px-3 py-3 bg-blue-100 text-primary rounded-lg hover:bg-blue-200 transition font-semibold text-sm"
+          >
+            ▼
+          </button>
+          <button
+            onClick={() => setExpandedTeams(new Set())}
+            title="Thu gọn tất cả"
+            className="px-3 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold text-sm"
+          >
+            ▶
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-3 sm:pb-0">
+        {(() => {
+          const filteredTeams = getFilteredTeams();
+
+          if (filteredTeams.size === 0) {
+            return (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                <p className="text-yellow-800">
+                  {searchQuery
+                    ? `Không tìm thấy tổ hoặc nhân viên phù hợp với "${searchQuery}"`
+                    : "Không có tổ nào"}
+                </p>
+              </div>
+            );
+          }
+
+          return Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => {
+            const isExpanded = expandedTeams.has(team);
+            const presentCount = teamWorkers.filter((w) => {
+              const current = changes.get(w.id) || attendance.get(w.id);
+              return current?.status === "present";
+            }).length;
 
           return (
             <div key={team} className="bg-white rounded-lg shadow overflow-hidden">
               {/* Team Header */}
               <div className="bg-gradient-to-r from-primary to-blue-800 text-white p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-xl font-bold">{team}</h3>
-                    <p className="text-blue-100">
-                      {presentCount}/{teamWorkers.length} {vi.attendance.statusPresent}
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => toggleTeamExpanded(team)}
+                    className="flex-1 text-left hover:opacity-80 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{isExpanded ? "▼" : "▶"}</span>
+                      <div>
+                        <h3 className="text-lg font-bold">{team}</h3>
+                        <p className="text-sm text-blue-100">
+                          {presentCount}/{teamWorkers.length} {vi.attendance.statusPresent}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
                 {/* Batch Mark Buttons - optimized for mobile */}
@@ -317,9 +417,10 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Team Workers */}
-              <div className="space-y-2 p-4">
-                {teamWorkers.map((worker) => {
+              {/* Team Workers - shown only when expanded */}
+              {isExpanded && (
+                <div className="space-y-2 p-4 border-t border-gray-100">
+                  {teamWorkers.map((worker) => {
                   const current = changes.get(worker.id) || attendance.get(worker.id);
 
                   return (
@@ -375,10 +476,12 @@ export default function HomePage() {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+              )}
             </div>
           );
-        })}
+          });
+        })()}
       </div>
 
       {changes.size > 0 && (
