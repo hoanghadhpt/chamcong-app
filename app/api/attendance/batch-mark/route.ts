@@ -28,15 +28,20 @@ export async function POST(request: NextRequest) {
     const db = getDB();
 
     // Get all active workers in this team (excluding specified workers)
-    const workers = db
-      .prepare(
-        `
+    let workerQuery = `
       SELECT id FROM workers
-      WHERE manager_id = ? AND team = ? AND active = 1
-      AND id NOT IN (${excludeWorkerIds.length > 0 ? excludeWorkerIds.map(() => "?").join(",") : "NULL"})
-    `
-      )
-      .all(userId, teamName, ...excludeWorkerIds) as Array<{ id: number }>;
+      WHERE manager_id = $1 AND team = $2 AND active = 1
+    `;
+    const workerParams: (string | number)[] = [userId, teamName];
+
+    if (excludeWorkerIds.length > 0) {
+      const placeholders = excludeWorkerIds.map((_id: number, i: number) => `$${i + 3}`).join(",");
+      workerQuery += ` AND id NOT IN (${placeholders})`;
+      workerParams.push(...excludeWorkerIds);
+    }
+
+    const workersResult = await db.query(workerQuery, workerParams);
+    const workers = workersResult.rows as Array<{ id: number }>;
 
     if (workers.length === 0) {
       return NextResponse.json(
@@ -49,30 +54,32 @@ export async function POST(request: NextRequest) {
 
     // Upsert attendance records for each worker
     for (const worker of workers) {
-      const existing = db
-        .prepare(
-          `
+      const existingResult = await db.query(
+        `
         SELECT id FROM attendance
-        WHERE manager_id = ? AND worker_id = ? AND work_date = ?
-      `
-        )
-        .get(userId, worker.id, workDate) as { id: number } | undefined;
+        WHERE manager_id = $1 AND worker_id = $2 AND work_date = $3
+      `,
+        [userId, worker.id, workDate]
+      );
+      const existing = existingResult.rows[0] as { id: number } | undefined;
 
       if (existing) {
-        db.prepare(
+        await db.query(
           `
           UPDATE attendance
-          SET status = ?, shift_amount = ?
-          WHERE id = ?
-        `
-        ).run(status, shiftAmount, existing.id);
+          SET status = $1, shift_amount = $2
+          WHERE id = $3
+        `,
+          [status, shiftAmount, existing.id]
+        );
       } else {
-        db.prepare(
+        await db.query(
           `
           INSERT INTO attendance (manager_id, worker_id, work_date, status, shift_amount)
-          VALUES (?, ?, ?, ?, ?)
-        `
-        ).run(userId, worker.id, workDate, status, shiftAmount);
+          VALUES ($1, $2, $3, $4, $5)
+        `,
+          [userId, worker.id, workDate, status, shiftAmount]
+        );
       }
 
       updated++;
