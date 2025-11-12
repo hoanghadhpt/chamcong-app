@@ -138,7 +138,10 @@ export default function ReportsPage() {
 
   // Generate matrix data - memoized for performance
   const matrixData = useMemo(() => {
-    if (viewType !== "matrix") return null;
+    if (viewType !== "matrix") {
+      return null;
+    }
+
     if (!workers.length) {
       console.log("Ma trận: Không có workers");
       return { dates: [], workerRows: [] };
@@ -159,11 +162,11 @@ export default function ReportsPage() {
     // Create matrix
     const workerRows = workers.map((worker) => {
       const attendanceMap = new Map<string, AttendanceRecord>();
-      attendanceData
-        .filter((a) => a.worker_id === worker.id)
-        .forEach((a) => {
-          attendanceMap.set(a.work_date, a);
-        });
+      const filteredAttendance = attendanceData.filter((a) => a.worker_id === worker.id);
+
+      filteredAttendance.forEach((a) => {
+        attendanceMap.set(a.work_date, a);
+      });
 
       const dateData = dates.map((date) => attendanceMap.get(date) || null);
 
@@ -183,7 +186,7 @@ export default function ReportsPage() {
       };
     });
 
-    console.log("Ma trận - Số worker rows:", workerRows.length);
+    console.log("Ma trận - Đã tạo", workerRows.length, "rows");
     return { dates, workerRows };
   }, [viewType, workers, attendanceData, fromDate, toDate]);
 
@@ -358,6 +361,14 @@ export default function ReportsPage() {
               )}
 
               {/* Matrix View */}
+              {viewType === "matrix" && !matrixData && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">⏳</div>
+                    <p className="text-gray-600 font-medium">Đang tải ma trận...</p>
+                  </div>
+                </div>
+              )}
               {viewType === "matrix" && matrixData && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
