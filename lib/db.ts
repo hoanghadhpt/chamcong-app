@@ -19,7 +19,70 @@ export function getDB(): Database.Database {
 function initializeSchema() {
   const database = db!;
 
-  // Check if tables exist
+  // Check if sessions table exists and has user_agent column
+  const sessionTableExists = database
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='sessions'"
+    )
+    .get() as { name: string } | undefined;
+
+  if (sessionTableExists) {
+    // Check if user_agent column exists
+    const sessionColumns = database
+      .prepare(
+        "PRAGMA table_info(sessions);"
+      )
+      .all() as Array<{ name: string }>;
+
+    const hasUserAgent = sessionColumns.some((col) => col.name === "user_agent");
+
+    if (!hasUserAgent) {
+      // Migrate existing sessions table by adding missing columns
+      console.log("Migrating sessions table: adding user_agent and ip columns...");
+      database.exec(`
+        ALTER TABLE sessions ADD COLUMN user_agent TEXT;
+        ALTER TABLE sessions ADD COLUMN ip TEXT;
+      `);
+    }
+  }
+
+  // Check if attendance table exists and add missing columns if needed
+  const attendanceTableExists = database
+    .prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='attendance'"
+    )
+    .get() as { name: string } | undefined;
+
+  if (attendanceTableExists) {
+    const attendanceColumns = database
+      .prepare(
+        "PRAGMA table_info(attendance);"
+      )
+      .all() as Array<{ name: string }>;
+
+    const columnNames = attendanceColumns.map((col) => col.name);
+    const needsLateMinutes = !columnNames.includes("late_minutes");
+    const needsEarlyMinutes = !columnNames.includes("early_minutes");
+    const needsOT = !columnNames.includes("ot_1_5");
+    const needsShiftId = !columnNames.includes("shift_id");
+
+    if (needsLateMinutes || needsEarlyMinutes || needsOT || needsShiftId) {
+      console.log("Migrating attendance table: adding new columns...");
+      const alterStmts = [];
+      if (needsLateMinutes) alterStmts.push("ALTER TABLE attendance ADD COLUMN late_minutes INTEGER;");
+      if (needsEarlyMinutes) alterStmts.push("ALTER TABLE attendance ADD COLUMN early_minutes INTEGER;");
+      if (needsOT) {
+        alterStmts.push("ALTER TABLE attendance ADD COLUMN ot_1_5 INTEGER DEFAULT 0;");
+        alterStmts.push("ALTER TABLE attendance ADD COLUMN ot_2_0 INTEGER DEFAULT 0;");
+        alterStmts.push("ALTER TABLE attendance ADD COLUMN ot_3_0 INTEGER DEFAULT 0;");
+      }
+      if (needsShiftId) alterStmts.push("ALTER TABLE attendance ADD COLUMN shift_id INTEGER REFERENCES shifts(id);");
+
+      database.exec(alterStmts.join("\n"));
+    }
+  }
+
+  // Check if all new tables exist
   const tables = database
     .prepare(
       "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'sessions', 'workers', 'shifts', 'settings', 'holidays', 'attendance')"
@@ -27,7 +90,7 @@ function initializeSchema() {
     .all() as { name: string }[];
 
   if (tables.length === 7) {
-    return; // Schema already exists
+    return; // Schema fully updated
   }
 
   // Create tables if they don't exist
