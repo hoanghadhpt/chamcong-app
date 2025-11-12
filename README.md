@@ -1,6 +1,8 @@
 # Chấm Công - PWA Attendance Management System
 
-A modern, offline-first Progressive Web App (PWA) for managing worker attendance in factories. Built with Next.js 15, SQLite, TypeScript, and Tailwind CSS.
+A modern, offline-first Progressive Web App (PWA) for managing worker attendance in factories and SMEs. Built with Next.js 15, SQLite, TypeScript, and Tailwind CSS. **Fully optimized for Vietnamese businesses (vi-VN locale, Asia/Ho_Chi_Minh timezone).**
+
+> **📖 Hướng dẫn Tiếng Việt:** Xem [README_VI.md](./README_VI.md) để tài liệu đầy đủ bằng tiếng Việt.
 
 ## Features
 
