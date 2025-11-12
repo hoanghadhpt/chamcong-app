@@ -48,6 +48,7 @@ export default function ReportsPage() {
 
   // Fetch data
   const fetchData = useCallback(async () => {
+    console.log("Fetching data for range:", fromDate, "to", toDate);
     setLoading(true);
     try {
       const [workersRes, attendanceRes] = await Promise.all([
@@ -59,11 +60,16 @@ export default function ReportsPage() {
       let workersData: Worker[] = [];
       if (workersRes.ok) {
         workersData = await workersRes.json();
-        setWorkers(workersData.filter((w: Worker) => w.active === 1));
+        const activeWorkers = workersData.filter((w: Worker) => w.active === 1);
+        console.log("Workers fetched:", workersData.length, "active:", activeWorkers.length);
+        setWorkers(activeWorkers);
+      } else {
+        console.error("Failed to fetch workers:", workersRes.status);
       }
 
       if (attendanceRes.ok) {
         const attendanceRecords: AttendanceRecord[] = await attendanceRes.json();
+        console.log("Attendance records fetched:", attendanceRecords.length);
 
         // Merge with worker data
         const workersMap = new Map<number, Worker>();
@@ -79,7 +85,10 @@ export default function ReportsPage() {
           };
         });
 
+        console.log("Merged attendance data:", merged.length);
         setAttendanceData(merged);
+      } else {
+        console.error("Failed to fetch attendance:", attendanceRes.status);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -130,7 +139,10 @@ export default function ReportsPage() {
   // Generate matrix data - memoized for performance
   const matrixData = useMemo(() => {
     if (viewType !== "matrix") return null;
-    if (!workers.length) return { dates: [], workerRows: [] };
+    if (!workers.length) {
+      console.log("Ma trận: Không có workers");
+      return { dates: [], workerRows: [] };
+    }
 
     // Get all dates in range
     const dates: string[] = [];
@@ -139,6 +151,10 @@ export default function ReportsPage() {
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       dates.push(d.toISOString().split("T")[0]);
     }
+
+    console.log("Ma trận - Số workers:", workers.length);
+    console.log("Ma trận - Số ngày:", dates.length);
+    console.log("Ma trận - Số bản ghi attendance:", attendanceData.length);
 
     // Create matrix
     const workerRows = workers.map((worker) => {
@@ -167,6 +183,7 @@ export default function ReportsPage() {
       };
     });
 
+    console.log("Ma trận - Số worker rows:", workerRows.length);
     return { dates, workerRows };
   }, [viewType, workers, attendanceData, fromDate, toDate]);
 
@@ -191,7 +208,14 @@ export default function ReportsPage() {
       {/* Desktop View */}
       <div className="hidden lg:block">
         <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-3xl font-bold text-primary mb-6">📊 Báo cáo Chấm công</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-primary">📊 Báo cáo Chấm công</h2>
+            <div className="text-sm text-gray-500">
+              View: <span className="font-bold text-accent">{viewType}</span> |
+              Workers: <span className="font-bold">{workers.length}</span> |
+              Records: <span className="font-bold">{attendanceData.length}</span>
+            </div>
+          </div>
 
           {/* Controls */}
           <div className="space-y-4 mb-6">
@@ -224,7 +248,10 @@ export default function ReportsPage() {
             {/* View Type Toggle */}
             <div className="flex gap-3">
               <button
-                onClick={() => setViewType("detail")}
+                onClick={() => {
+                  console.log("Switching to detail view");
+                  setViewType("detail");
+                }}
                 className={`flex-1 px-6 py-3 rounded-lg border-2 transition font-semibold ${
                   viewType === "detail"
                     ? "border-accent bg-blue-50 text-accent"
@@ -234,7 +261,10 @@ export default function ReportsPage() {
                 📋 Chi tiết
               </button>
               <button
-                onClick={() => setViewType("matrix")}
+                onClick={() => {
+                  console.log("Switching to matrix view");
+                  setViewType("matrix");
+                }}
                 className={`flex-1 px-6 py-3 rounded-lg border-2 transition font-semibold ${
                   viewType === "matrix"
                     ? "border-accent bg-blue-50 text-accent"
@@ -369,7 +399,17 @@ export default function ReportsPage() {
                             className="px-6 py-12 text-center text-gray-500"
                           >
                             <div className="text-3xl mb-2">📭</div>
-                            <p>Không có dữ liệu</p>
+                            <p className="font-semibold text-gray-700 mb-2">Không có dữ liệu hiển thị</p>
+                            <p className="text-sm">
+                              {workers.length === 0 ? (
+                                "Không có nhân viên nào đang hoạt động"
+                              ) : (
+                                "Không có dữ liệu chấm công trong khoảng thời gian này"
+                              )}
+                            </p>
+                            <p className="text-xs mt-2 text-gray-500">
+                              Vui lòng thêm nhân viên và chấm công để xem báo cáo
+                            </p>
                           </td>
                         </tr>
                       ) : (
