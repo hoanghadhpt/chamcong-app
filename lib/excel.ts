@@ -66,7 +66,10 @@ export async function generateDetailExcel(
     : ALL_DETAIL_COLUMNS;
 
   // Set column widths
-  worksheet.columns = columnsToUse;
+  worksheet.columns = columnsToUse.map(col => ({
+    key: col.key,
+    width: col.width
+  }));
 
   // Add title
   const titleCell = worksheet.getCell("A1");
@@ -75,15 +78,25 @@ export async function generateDetailExcel(
   const lastCol = String.fromCharCode(64 + columnsToUse.length); // Convert number to letter (1=A, 2=B, etc.)
   worksheet.mergeCells(`A1:${lastCol}1`);
 
-  // Style header row
+  // Add header row with values
   const headerRow = worksheet.getRow(2);
-  headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  headerRow.fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FF1F2937" },
-  };
-  headerRow.alignment = { horizontal: "center" as any, vertical: "middle" as any };
+  columnsToUse.forEach((col, index) => {
+    const cell = headerRow.getCell(index + 1);
+    cell.value = col.header;
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFCC785C" }, // Claude's copper color
+    };
+    cell.alignment = { horizontal: "center" as any, vertical: "middle" as any };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
 
   // Add data (starting from row 3)
   let rowNum = 3;
@@ -163,7 +176,11 @@ export async function generateMatrixExcel(
   columns.push({ header: "Ốm", key: "sick", width: 6 });
   columns.push({ header: "OT", key: "ot_hours", width: 6 });
 
-  worksheet.columns = columns;
+  // Set column widths only (without headers)
+  worksheet.columns = columns.map(col => ({
+    key: col.key,
+    width: col.width
+  }));
 
   // Style title row
   const titleRow = worksheet.getRow(1);
@@ -174,19 +191,29 @@ export async function generateMatrixExcel(
   titleRow.fill = {
     type: "pattern",
     pattern: "solid",
-    fgColor: { argb: "FF3B82F6" },
+    fgColor: { argb: "FFE8956E" }, // Claude's accent-light color
   };
   worksheet.mergeCells(`A1:${getLetter(columns.length)}1`);
 
-  // Style header row
+  // Add header row with values
   const headerRow = worksheet.getRow(2);
-  headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  headerRow.fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FF1F2937" },
-  };
-  headerRow.alignment = { horizontal: "center" as any, vertical: "middle" as any };
+  columns.forEach((col, index) => {
+    const cell = headerRow.getCell(index + 1);
+    cell.value = col.header;
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFCC785C" }, // Claude's copper color
+    };
+    cell.alignment = { horizontal: "center" as any, vertical: "middle" as any };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+  });
 
   // Add worker data
   let rowNum = 3;
