@@ -231,7 +231,7 @@ export default function WorkersPage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `nhan_vien_${new Date().toISOString().split("T")[0]}.csv`;
+        a.download = `danh_sach_nhan_vien_${new Date().toISOString().split("T")[0]}.xlsx`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -282,13 +282,13 @@ export default function WorkersPage() {
             onClick={() => {
               const a = document.createElement("a");
               a.href = "/api/workers/template";
-              a.download = "chamcong_sample_workers.csv";
+              a.download = `mau_danh_sach_nhan_vien_${new Date().toISOString().split("T")[0]}.xlsx`;
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
             }}
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base"
-            title="Tải file mẫu CSV để nhập"
+            title="Tải file mẫu Excel để nhập"
           >
             📥 {vi.workers.downloadTemplate || "Tải mẫu"}
           </button>
@@ -303,7 +303,7 @@ export default function WorkersPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             onChange={handleImport}
             className="hidden"
           />

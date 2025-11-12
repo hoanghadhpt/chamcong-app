@@ -1,27 +1,19 @@
 import { NextResponse } from "next/server";
+import { generateExcelTemplate } from "@/lib/workers";
 
 export async function GET() {
   try {
-    // Create sample CSV with proper headers and format
-    const headers = ["mã_nv", "họ_tên", "điện_thoại", "bộ_phận", "hoạt_động"];
-    const sampleData = [
-      ["NV001", "Nguyễn Văn A", "0912345678", "Sản xuất", "Có"],
-      ["NV002", "Trần Thị B", "0987654321", "Kế toán", "Có"],
-      ["NV003", "Phạm Văn C", "0901234567", "Kinh doanh", "Không"],
-    ];
+    // Generate Excel template with sample data
+    const buffer = await generateExcelTemplate();
 
-    // Build CSV content
-    const csvLines = [
-      headers.join(","),
-      ...sampleData.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-    ];
-    const csvContent = csvLines.join("\n");
+    // Get current date for filename
+    const date = new Date().toISOString().split("T")[0];
 
-    // Create response with CSV content
-    const response = new NextResponse(csvContent, {
+    // Create response with Excel file
+    const response = new NextResponse(buffer as unknown as BodyInit, {
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="chamcong_sample_workers.csv"',
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="mau_danh_sach_nhan_vien_${date}.xlsx"`,
       },
     });
 

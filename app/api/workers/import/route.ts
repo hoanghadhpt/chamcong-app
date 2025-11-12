@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   importWorkers,
   parseCSV,
+  parseExcel,
   detectColumnMapping,
   transformRecordsByMapping,
   ColumnMapping,
@@ -33,21 +34,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const content = await file.text();
-    const lines = content.split("\n").filter((line) => line.trim());
+    // Detect file type
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
 
-    if (lines.length === 0) {
-      return NextResponse.json(
-        { error: "File is empty" },
-        { status: 400 }
-      );
+    let headers: string[];
+    let records: Array<Record<string, string>>;
+
+    if (isExcel) {
+      // Parse Excel file
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await parseExcel(arrayBuffer);
+      headers = result.headers;
+      records = result.records;
+    } else {
+      // Parse CSV file
+      const content = await file.text();
+      const lines = content.split("\n").filter((line) => line.trim());
+
+      if (lines.length === 0) {
+        return NextResponse.json(
+          { error: "File is empty" },
+          { status: 400 }
+        );
+      }
+
+      headers = lines[0].split(",").map((h) => h.trim());
+      records = parseCSV(content);
     }
-
-    // Parse headers
-    const headerLine = lines[0];
-    const headers = headerLine
-      .split(",")
-      .map((h) => h.trim());
 
     if (action === "detect") {
       // First step: detect column mapping
@@ -56,8 +69,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         headers,
         mapping,
-        sampleCount: Math.min(3, lines.length - 1),
-        totalRows: lines.length - 1,
+        sampleCount: Math.min(3, records.length),
+        totalRows: records.length,
       });
     } else {
       // Second step: import with provided or detected mapping
@@ -69,7 +82,6 @@ export async function POST(request: NextRequest) {
         mapping = detectColumnMapping(headers);
       }
 
-      const records = parseCSV(content);
       const transformedRecords = transformRecordsByMapping(records, mapping);
       const result = importWorkers(userId, transformedRecords);
 
