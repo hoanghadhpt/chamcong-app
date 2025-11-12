@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = getUserByEmail(email);
+    const user = await getUserByEmail(email);
     if (!user) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
                request.headers.get("x-real-ip") ||
                undefined;
 
-    const session = createSession(user.id, expiresAt, userAgent, ip);
+    const session = await createSession(user.id, expiresAt, userAgent, ip);
 
     const response = NextResponse.json(
       {

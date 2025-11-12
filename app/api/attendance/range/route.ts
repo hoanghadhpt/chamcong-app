@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const records = getAttendanceByDateRange(userId, fromDate, toDate);
+    const records = await getAttendanceByDateRange(userId, fromDate, toDate);
 
     return NextResponse.json(records);
   } catch (error) {

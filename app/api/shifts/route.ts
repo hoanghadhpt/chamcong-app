@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
-    const shifts = getShiftsByManagerId(userId);
+    const shifts = await getShiftsByManagerId(userId);
     return NextResponse.json(shifts);
   } catch (error) {
     console.error("Error fetching shifts:", error);
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const shift = createShift(
+    const shift = await createShift(
       userId,
       name,
       start_time,
@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const shift = updateShift(
+    const shift = await updateShift(
       id,
       userId,
       name,
@@ -130,7 +130,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    deleteShift(parseInt(shiftId), userId);
+    await deleteShift(parseInt(shiftId), userId);
 
     return NextResponse.json({ message: "Shift deleted successfully" });
   } catch (error) {

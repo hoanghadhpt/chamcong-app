@@ -15,12 +15,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
-    const workers = getWorkersByManagerId(userId);
+    const workers = await getWorkersByManagerId(userId);
     return NextResponse.json(workers);
   } catch (error) {
     console.error("Error fetching workers:", error);
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const worker = createWorker(
+    const worker = await createWorker(
       userId,
       code,
       name,
@@ -85,7 +85,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -99,7 +99,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const worker = updateWorker(
+    const worker = await updateWorker(
       id,
       userId,
       code,
@@ -127,7 +127,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -142,7 +142,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    deleteWorker(parseInt(workerId), userId);
+    await deleteWorker(parseInt(workerId), userId);
 
     return NextResponse.json({ message: "Worker deleted successfully" });
   } catch (error) {

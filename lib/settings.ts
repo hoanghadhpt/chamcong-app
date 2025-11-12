@@ -25,53 +25,55 @@ const DEFAULT_SETTINGS: Omit<Settings, "manager_id"> = {
   enable_selfie: 0,
 };
 
-export function getSettingsByManagerId(managerId: number): Settings {
+export async function getSettingsByManagerId(managerId: number): Promise<Settings> {
   const db = getDB();
-  const existing = db
-    .prepare("SELECT * FROM settings WHERE manager_id = ?")
-    .get(managerId) as Settings | undefined;
+  const result = await db.query(
+    "SELECT * FROM settings WHERE manager_id = $1",
+    [managerId]
+  );
+
+  const existing = result.rows[0] as Settings | undefined;
 
   if (existing) {
     return existing;
   }
 
   // Create default settings for new manager
-  const stmt = db.prepare(
+  const insertResult = await db.query(
     `INSERT INTO settings
      (manager_id, workday_minutes, round_step_minutes, late_grace, early_grace, locale, tz, enable_gps, enable_selfie)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [
+      managerId,
+      DEFAULT_SETTINGS.workday_minutes,
+      DEFAULT_SETTINGS.round_step_minutes,
+      DEFAULT_SETTINGS.late_grace,
+      DEFAULT_SETTINGS.early_grace,
+      DEFAULT_SETTINGS.locale,
+      DEFAULT_SETTINGS.tz,
+      DEFAULT_SETTINGS.enable_gps,
+      DEFAULT_SETTINGS.enable_selfie
+    ]
   );
 
-  stmt.run(
-    managerId,
-    DEFAULT_SETTINGS.workday_minutes,
-    DEFAULT_SETTINGS.round_step_minutes,
-    DEFAULT_SETTINGS.late_grace,
-    DEFAULT_SETTINGS.early_grace,
-    DEFAULT_SETTINGS.locale,
-    DEFAULT_SETTINGS.tz,
-    DEFAULT_SETTINGS.enable_gps,
-    DEFAULT_SETTINGS.enable_selfie
-  );
-
-  return getSettingsByManagerId(managerId);
+  return insertResult.rows[0] as Settings;
 }
 
-export function updateSettings(
+export async function updateSettings(
   managerId: number,
   updates: Partial<Omit<Settings, "manager_id">>
-): Settings {
+): Promise<Settings> {
   const db = getDB();
 
-  const setClause = Object.keys(updates)
-    .map((key) => `${key} = ?`)
-    .join(", ");
-
+  const keys = Object.keys(updates);
+  const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
   const values = Object.values(updates);
 
-  db.prepare(
-    `UPDATE settings SET ${setClause} WHERE manager_id = ?`
-  ).run(...values, managerId);
+  await db.query(
+    `UPDATE settings SET ${setClause} WHERE manager_id = $${keys.length + 1}`,
+    [...values, managerId]
+  );
 
   return getSettingsByManagerId(managerId);
 }
