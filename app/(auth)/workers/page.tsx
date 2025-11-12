@@ -253,19 +253,19 @@ export default function WorkersPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-2xl font-bold text-primary mb-4">{vi.workers.title}</h2>
+    <div className="space-y-4 max-w-7xl mx-auto p-4 lg:p-6 xl:p-8">
+      <div className="bg-white rounded-xl shadow-md p-4 lg:p-6">
+        <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-4 lg:mb-6">{vi.workers.title}</h2>
 
-        {/* Action buttons - optimized for mobile */}
-        <div className="grid grid-cols-2 sm:flex gap-2 flex-wrap mb-4">
+        {/* Action buttons - responsive grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-4 lg:mb-6">
           <button
             onClick={() => {
               setShowForm(!showForm);
               setEditingId(null);
               setFormData({ code: "", name: "", phone: "", team: "" });
             }}
-            className="bg-accent hover:bg-blue-600 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base sm:text-base"
+            className="bg-accent hover:bg-blue-600 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
           >
             {showForm && !editingId ? vi.common.cancel : vi.workers.add}
           </button>
@@ -273,7 +273,7 @@ export default function WorkersPage() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={saving}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition disabled:opacity-50 text-base"
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition disabled:opacity-50 text-base lg:text-lg"
           >
             {vi.workers.import}
           </button>
@@ -287,7 +287,7 @@ export default function WorkersPage() {
               a.click();
               document.body.removeChild(a);
             }}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
             title="Tải file mẫu Excel để nhập"
           >
             📥 {vi.workers.downloadTemplate || "Tải mẫu"}
@@ -295,7 +295,7 @@ export default function WorkersPage() {
 
           <button
             onClick={handleExport}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base col-span-2 sm:col-span-1"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg col-span-2 lg:col-span-1"
           >
             {vi.workers.export}
           </button>
@@ -310,8 +310,8 @@ export default function WorkersPage() {
         </div>
 
         {showForm && (
-          <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded mb-4 space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit} className="bg-gray-50 p-4 lg:p-6 rounded-xl mb-4 lg:mb-6 space-y-3 lg:space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4">
               <input
                 type="text"
                 placeholder={vi.workers.code}
@@ -319,7 +319,7 @@ export default function WorkersPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, code: e.target.value })
                 }
-                className="px-3 py-2 border border-gray-300 rounded text-base"
+                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
                 required
               />
               <input
@@ -329,7 +329,7 @@ export default function WorkersPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="px-3 py-2 border border-gray-300 rounded text-base"
+                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
                 required
               />
               <input
@@ -339,7 +339,7 @@ export default function WorkersPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
-                className="px-3 py-2 border border-gray-300 rounded text-base"
+                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
               />
               <input
                 type="text"
@@ -348,14 +348,14 @@ export default function WorkersPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, team: e.target.value })
                 }
-                className="px-3 py-2 border border-gray-300 rounded text-base"
+                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
               />
             </div>
 
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-2 rounded transition disabled:opacity-50"
+              className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-2 lg:py-3 rounded-lg text-base lg:text-lg transition disabled:opacity-50"
             >
               {saving ? vi.common.saving + "..." : editingId ? vi.workers.update : vi.workers.add}
             </button>
@@ -363,38 +363,38 @@ export default function WorkersPage() {
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
         {workers.length === 0 ? (
-          <div className="text-center py-8 text-gray-600">
+          <div className="text-center py-8 text-gray-600 lg:col-span-2 xl:col-span-3">
             {vi.workers.emptyState}
           </div>
         ) : (
           workers.map((worker) => (
             <div
               key={worker.id}
-              className="bg-white rounded-lg shadow p-4 flex items-start justify-between"
+              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 lg:p-5 flex flex-col gap-3"
             >
-              <div>
-                <p className="font-bold">{worker.name}</p>
-                <p className="text-sm text-gray-600">
+              <div className="flex-1">
+                <p className="font-bold text-base lg:text-lg">{worker.name}</p>
+                <p className="text-sm lg:text-base text-gray-600">
                   {worker.code} | {worker.team || vi.workers.noTeam}
                 </p>
                 {worker.phone && (
-                  <p className="text-sm text-gray-600">{worker.phone}</p>
+                  <p className="text-sm lg:text-base text-gray-600">{worker.phone}</p>
                 )}
               </div>
 
-              {/* Action buttons - optimized for mobile */}
-              <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+              {/* Action buttons - responsive */}
+              <div className="flex gap-2">
                 <button
                   onClick={() => handleEdit(worker)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold transition text-base"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
                 >
                   {vi.common.edit}
                 </button>
                 <button
                   onClick={() => handleDelete(worker.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold transition text-base"
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
                 >
                   {vi.common.delete}
                 </button>
