@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       const [year, month] = fromDate.split("-").slice(0, 2).map(Number);
 
       // Build attendance map for matrix
-      const attendanceMap: { [key: string]: string } = {};
+      const attendanceMap: { [key: string]: string | { status: string; shiftAmount?: number } } = {};
       const statusCodes: { [key: string]: string } = {
         present: "P",
         absent: "V",
@@ -55,7 +55,11 @@ export async function POST(request: NextRequest) {
 
       attendanceData.forEach((record) => {
         const key = `${record.worker_id}:${record.work_date}`;
-        attendanceMap[key] = record.status ? (statusCodes[record.status as keyof typeof statusCodes] || "") : "";
+        const status = record.status ? (statusCodes[record.status as keyof typeof statusCodes] || "") : "";
+        attendanceMap[key] = {
+          status,
+          shiftAmount: record.shift_amount || 1.0,
+        };
       });
 
       const workersForMatrix = workers.map((w) => ({
@@ -83,6 +87,7 @@ export async function POST(request: NextRequest) {
         ot_2_0: record.ot_2_0,
         ot_3_0: record.ot_3_0,
         note: record.note,
+        shiftAmount: record.shift_amount || 1.0,
       }));
 
       buffer = await generateDetailExcel(fromDate, toDate, detailData);

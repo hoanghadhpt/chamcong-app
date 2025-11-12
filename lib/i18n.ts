@@ -81,6 +81,10 @@ export const vi = {
     noWorkers: "Không có nhân viên",
     saved: "Đã lưu",
     savingOffline: "Đã lưu (Offline – sẽ đồng bộ)",
+    halfDay: "Nửa ngày",
+    fullDay: "Cả ngày",
+    shiftAmount: "Loại ca",
+    selectShift: "Chọn loại ca làm",
   },
 
   // Workers

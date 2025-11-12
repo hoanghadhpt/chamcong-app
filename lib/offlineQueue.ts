@@ -10,6 +10,7 @@ interface QueueItem {
   status: string;
   checkIn: string | null;
   checkOut: string | null;
+  shiftAmount?: number;
   timestamp: number;
 }
 
@@ -69,6 +70,7 @@ export async function syncQueue() {
           status: item.status,
           checkIn: item.checkIn,
           checkOut: item.checkOut,
+          shiftAmount: item.shiftAmount || 1.0,
         }),
       });
 

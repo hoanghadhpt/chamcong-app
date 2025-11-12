@@ -65,8 +65,9 @@ function initializeSchema() {
     const needsEarlyMinutes = !columnNames.includes("early_minutes");
     const needsOT = !columnNames.includes("ot_1_5");
     const needsShiftId = !columnNames.includes("shift_id");
+    const needsShiftAmount = !columnNames.includes("shift_amount");
 
-    if (needsLateMinutes || needsEarlyMinutes || needsOT || needsShiftId) {
+    if (needsLateMinutes || needsEarlyMinutes || needsOT || needsShiftId || needsShiftAmount) {
       console.log("Migrating attendance table: adding new columns...");
       const alterStmts = [];
       if (needsLateMinutes) alterStmts.push("ALTER TABLE attendance ADD COLUMN late_minutes INTEGER;");
@@ -77,6 +78,7 @@ function initializeSchema() {
         alterStmts.push("ALTER TABLE attendance ADD COLUMN ot_3_0 INTEGER DEFAULT 0;");
       }
       if (needsShiftId) alterStmts.push("ALTER TABLE attendance ADD COLUMN shift_id INTEGER REFERENCES shifts(id);");
+      if (needsShiftAmount) alterStmts.push("ALTER TABLE attendance ADD COLUMN shift_amount REAL DEFAULT 1.0;");
 
       database.exec(alterStmts.join("\n"));
     }
@@ -167,6 +169,7 @@ function initializeSchema() {
       ot_3_0 INTEGER DEFAULT 0,
       note TEXT,
       shift_id INTEGER REFERENCES shifts(id),
+      shift_amount REAL DEFAULT 1.0,
       UNIQUE(manager_id, worker_id, work_date)
     );
 

@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       ot_3_0 = 0,
       note,
       shiftId,
+      shiftAmount = 1.0,
     } = await request.json();
 
     if (!workerId || !workDate || !status) {
@@ -95,7 +96,8 @@ export async function POST(request: NextRequest) {
       ot_2_0,
       ot_3_0,
       note || null,
-      shiftId || null
+      shiftId || null,
+      shiftAmount
     );
 
     return NextResponse.json(record, { status: 201 });

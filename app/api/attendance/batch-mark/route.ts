@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { teamName, status, workDate, excludeWorkerIds = [] } = body;
+    const { teamName, status, workDate, excludeWorkerIds = [], shiftAmount = 1.0 } = body;
 
     if (!teamName || !status || !workDate) {
       return NextResponse.json(
@@ -62,17 +62,17 @@ export async function POST(request: NextRequest) {
         db.prepare(
           `
           UPDATE attendance
-          SET status = ?
+          SET status = ?, shift_amount = ?
           WHERE id = ?
         `
-        ).run(status, existing.id);
+        ).run(status, shiftAmount, existing.id);
       } else {
         db.prepare(
           `
-          INSERT INTO attendance (manager_id, worker_id, work_date, status)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO attendance (manager_id, worker_id, work_date, status, shift_amount)
+          VALUES (?, ?, ?, ?, ?)
         `
-        ).run(userId, worker.id, workDate, status);
+        ).run(userId, worker.id, workDate, status, shiftAmount);
       }
 
       updated++;

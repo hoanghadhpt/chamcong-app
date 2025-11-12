@@ -15,6 +15,7 @@ export interface AttendanceRecord {
   ot_3_0: number;
   note: string | null;
   shift_id: number | null;
+  shift_amount: number;
 }
 
 export function getAttendanceByDateRange(
@@ -121,7 +122,8 @@ export function upsertAttendance(
   ot_2_0: number = 0,
   ot_3_0: number = 0,
   note: string | null = null,
-  shiftId: number | null = null
+  shiftId: number | null = null,
+  shiftAmount: number = 1.0
 ): AttendanceRecord {
   const db = getDB();
 
@@ -135,7 +137,7 @@ export function upsertAttendance(
     db.prepare(
       `UPDATE attendance
        SET status = ?, check_in = ?, check_out = ?, late_minutes = ?, early_minutes = ?,
-           ot_1_5 = ?, ot_2_0 = ?, ot_3_0 = ?, note = ?, shift_id = ?
+           ot_1_5 = ?, ot_2_0 = ?, ot_3_0 = ?, note = ?, shift_id = ?, shift_amount = ?
        WHERE id = ?`
     ).run(
       status,
@@ -148,6 +150,7 @@ export function upsertAttendance(
       ot_3_0,
       note,
       shiftId,
+      shiftAmount,
       existing.id
     );
 
@@ -157,8 +160,8 @@ export function upsertAttendance(
   } else {
     const result = db
       .prepare(
-        `INSERT INTO attendance (manager_id, worker_id, work_date, status, check_in, check_out, late_minutes, early_minutes, ot_1_5, ot_2_0, ot_3_0, note, shift_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO attendance (manager_id, worker_id, work_date, status, check_in, check_out, late_minutes, early_minutes, ot_1_5, ot_2_0, ot_3_0, note, shift_id, shift_amount)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         managerId,
@@ -173,7 +176,8 @@ export function upsertAttendance(
         ot_2_0,
         ot_3_0,
         note,
-        shiftId
+        shiftId,
+        shiftAmount
       );
 
     return db

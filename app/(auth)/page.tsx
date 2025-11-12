@@ -20,6 +20,7 @@ interface AttendanceRecord {
   status: string | null;
   check_in: string | null;
   check_out: string | null;
+  shift_amount?: number;
 }
 
 const STATUS_OPTIONS = [
@@ -155,7 +156,8 @@ export default function HomePage() {
   const handleStatusChange = (
     workerId: number,
     status: string,
-    isCheckIn: boolean = false
+    isCheckIn: boolean = false,
+    shiftAmount: number = 1.0
   ) => {
     const existing = attendance.get(workerId) || changes.get(workerId);
     const updated: AttendanceRecord = {
@@ -167,6 +169,7 @@ export default function HomePage() {
         ? getCurrentTime()
         : existing?.check_in || null,
       check_out: existing?.check_out || null,
+      shift_amount: shiftAmount,
     };
 
     const newChanges = new Map(changes);
@@ -183,6 +186,7 @@ export default function HomePage() {
       status: existing?.status || "present",
       check_in: existing?.check_in || null,
       check_out: getCurrentTime(),
+      shift_amount: existing?.shift_amount || 1.0,
     };
 
     const newChanges = new Map(changes);
@@ -254,6 +258,7 @@ export default function HomePage() {
             status: record.status || "present",
             checkIn: record.check_in,
             checkOut: record.check_out,
+            shiftAmount: record.shift_amount || 1.0,
           }),
         });
 
@@ -283,6 +288,7 @@ export default function HomePage() {
               status: record.status || "present",
               checkIn: record.check_in,
               checkOut: record.check_out,
+              shiftAmount: record.shift_amount || 1.0,
             });
           }
         }
@@ -445,7 +451,7 @@ export default function HomePage() {
                         {STATUS_OPTIONS.map((option) => (
                           <button
                             key={option.key}
-                            onClick={() => handleStatusChange(worker.id, option.key)}
+                            onClick={() => handleStatusChange(worker.id, option.key, false, current?.shift_amount || 1.0)}
                             className={`px-3 py-2 sm:px-4 sm:py-2 rounded font-semibold transition text-sm sm:text-base ${
                               current?.status === option.key
                                 ? "bg-accent text-white"
@@ -457,10 +463,36 @@ export default function HomePage() {
                         ))}
                       </div>
 
+                      {/* Half-day selector for leave/absence statuses */}
+                      {(current?.status === "leave_paid" || current?.status === "leave_unpaid" || current?.status === "sick" || current?.status === "absent") && (
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={() => handleStatusChange(worker.id, current.status || "absent", false, 1.0)}
+                            className={`flex-1 px-3 py-2 rounded font-semibold transition text-sm ${
+                              (current?.shift_amount || 1.0) === 1.0
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            }`}
+                          >
+                            {vi.attendance.fullDay}
+                          </button>
+                          <button
+                            onClick={() => handleStatusChange(worker.id, current.status || "absent", false, 0.5)}
+                            className={`flex-1 px-3 py-2 rounded font-semibold transition text-sm ${
+                              (current?.shift_amount || 1.0) === 0.5
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            }`}
+                          >
+                            {vi.attendance.halfDay}
+                          </button>
+                        </div>
+                      )}
+
                       {current?.status === "present" && (
                         <div className="mt-3 flex flex-col sm:flex-row gap-2">
                           <button
-                            onClick={() => handleStatusChange(worker.id, "present", true)}
+                            onClick={() => handleStatusChange(worker.id, "present", true, current?.shift_amount || 1.0)}
                             className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded font-semibold transition text-base"
                           >
                             {vi.attendance.checkIn}: {current.check_in || "---"}

@@ -15,13 +15,14 @@ export interface DetailRecord {
   ot_2_0: number;
   ot_3_0: number;
   note: string | null;
+  shiftAmount?: number;
 }
 
 export interface MatrixRecord {
   workerCode: string;
   workerName: string;
   team: string;
-  dailyRecords: { [date: string]: string }; // date -> status code
+  dailyRecords: { [date: string]: { status: string; shiftAmount?: number } }; // date -> status code with shift amount
 }
 
 const STATUS_CODES: { [key: string]: string } = {
@@ -48,6 +49,7 @@ export async function generateDetailExcel(
     { header: "Họ tên", key: "workerName", width: 20 },
     { header: "Bộ phận", key: "team", width: 15 },
     { header: "Trạng thái", key: "status", width: 12 },
+    { header: "Loại ca", key: "shiftAmount", width: 10 },
     { header: "Vào", key: "checkIn", width: 10 },
     { header: "Ra", key: "checkOut", width: 10 },
     { header: "Trễ (phút)", key: "lateMinutes", width: 10 },
@@ -62,7 +64,7 @@ export async function generateDetailExcel(
   const titleCell = worksheet.getCell("A1");
   titleCell.value = `Báo cáo chấm công: ${formatDate(fromDate)} đến ${formatDate(toDate)}`;
   titleCell.font = { bold: true, size: 14 };
-  worksheet.mergeCells("A1:M1");
+  worksheet.mergeCells("A1:N1");
 
   // Style header row
   const headerRow = worksheet.getRow(2);
@@ -78,12 +80,14 @@ export async function generateDetailExcel(
   let rowNum = 3;
   attendanceData.forEach((record) => {
     const row = worksheet.getRow(rowNum);
+    const shiftAmountLabel = getShiftAmountLabel(record.shiftAmount || 1.0);
     row.values = {
       date: formatDate(record.date),
       workerCode: record.workerCode,
       workerName: record.workerName,
       team: record.team,
       status: getStatusLabel(record.status),
+      shiftAmount: shiftAmountLabel,
       checkIn: record.checkIn,
       checkOut: record.checkOut,
       lateMinutes: record.lateMinutes || "-",
@@ -120,7 +124,7 @@ export async function generateMatrixExcel(
   month: number,
   year: number,
   workers: Array<{ id: number; code: string; name: string; team: string }>,
-  attendanceData: { [key: string]: string } // key: "worker_id:YYYY-MM-DD", value: status code
+  attendanceData: { [key: string]: string | { status: string; shiftAmount?: number } } // key: "worker_id:YYYY-MM-DD", value: status code or object with status and shiftAmount
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(`${month}/${year}`);
@@ -203,14 +207,31 @@ export async function generateMatrixExcel(
         day
       ).padStart(2, "0")}`;
       const key = `${worker.id}:${dateStr}`;
-      const status = attendanceData[key] || "";
+      const rawData = attendanceData[key] || "";
+
+      // Handle both old format (string) and new format (object with shiftAmount)
+      let status = "";
+      if (typeof rawData === "string") {
+        status = rawData;
+      } else if (typeof rawData === "object" && rawData.status) {
+        status = rawData.status;
+        // Append /2 for half-day entries
+        if (rawData.shiftAmount === 0.5) {
+          status = status + "/2";
+        }
+      }
+
       rowData[`day_${day}`] = status;
 
-      // Count for summary
-      if (status === "P") workerPresent++;
-      else if (status === "V") workerAbsent++;
-      else if (status === "LP" || status === "LN") workerLeave++;
-      else if (status === "S") workerSick++;
+      // Count for summary (count half-days as 0.5)
+      const baseStatus = status.split("/")[0]; // Remove /2 suffix if present
+      const isHalfDay = status.includes("/2");
+      const countMultiplier = isHalfDay ? 0.5 : 1;
+
+      if (baseStatus === "P") workerPresent += countMultiplier;
+      else if (baseStatus === "V") workerAbsent += countMultiplier;
+      else if (baseStatus === "LP" || baseStatus === "LN") workerLeave += countMultiplier;
+      else if (baseStatus === "S") workerSick += countMultiplier;
     }
 
     rowData.present = workerPresent;
@@ -271,6 +292,13 @@ function getStatusLabel(status: string): string {
     ot: "Tăng ca",
   };
   return labels[status] || status;
+}
+
+function getShiftAmountLabel(shiftAmount: number): string {
+  if (shiftAmount === 0.5) {
+    return "Nửa ngày";
+  }
+  return "Cả ngày";
 }
 
 function getLetter(col: number): string {
