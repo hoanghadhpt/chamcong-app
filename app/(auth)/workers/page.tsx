@@ -279,6 +279,21 @@ export default function WorkersPage() {
           </button>
 
           <button
+            onClick={() => {
+              const a = document.createElement("a");
+              a.href = "/api/workers/template";
+              a.download = "chamcong_sample_workers.csv";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base"
+            title="Tải file mẫu CSV để nhập"
+          >
+            📥 {vi.workers.downloadTemplate || "Tải mẫu"}
+          </button>
+
+          <button
             onClick={handleExport}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 sm:py-2 rounded font-semibold transition text-base col-span-2 sm:col-span-1"
           >

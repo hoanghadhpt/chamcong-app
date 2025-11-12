@@ -4,6 +4,23 @@ import { useState } from "react";
 import Toast from "@/components/Toast";
 import { vi } from "@/lib/i18n";
 
+const DETAIL_COLUMNS = [
+  { key: "date", label: "Ngày" },
+  { key: "workerCode", label: "Mã NV" },
+  { key: "workerName", label: "Họ tên" },
+  { key: "team", label: "Bộ phận" },
+  { key: "status", label: "Trạng thái" },
+  { key: "shiftAmount", label: "Loại ca" },
+  { key: "checkIn", label: "Vào" },
+  { key: "checkOut", label: "Ra" },
+  { key: "lateMinutes", label: "Trễ (phút)" },
+  { key: "earlyMinutes", label: "Sớm (phút)" },
+  { key: "ot_1_5", label: "OT 1.5x" },
+  { key: "ot_2_0", label: "OT 2.0x" },
+  { key: "ot_3_0", label: "OT 3.0x" },
+  { key: "note", label: "Ghi chú" },
+];
+
 export default function ExportPage() {
   const [fromDate, setFromDate] = useState(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
@@ -14,6 +31,10 @@ export default function ExportPage() {
   const [format, setFormat] = useState<"detail" | "matrix">("detail");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
+    new Set(DETAIL_COLUMNS.map((col) => col.key))
+  );
+  const [showColumnSelection, setShowColumnSelection] = useState(false);
 
   const handleExport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +44,12 @@ export default function ExportPage() {
       const response = await fetch("/api/export/excel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fromDate, toDate, format }),
+        body: JSON.stringify({
+          fromDate,
+          toDate,
+          format,
+          selectedColumns: format === "detail" ? Array.from(selectedColumns) : undefined,
+        }),
       });
 
       if (response.ok) {
@@ -92,7 +118,10 @@ export default function ExportPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setFormat("detail")}
+                onClick={() => {
+                  setFormat("detail");
+                  setShowColumnSelection(false);
+                }}
                 className={`px-4 py-3 rounded-lg border-2 transition font-semibold text-left ${
                   format === "detail"
                     ? "border-accent bg-blue-50 text-accent"
@@ -116,6 +145,63 @@ export default function ExportPage() {
               </button>
             </div>
           </div>
+
+          {/* Column selection for detail format */}
+          {format === "detail" && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowColumnSelection(!showColumnSelection)}
+                className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold transition text-left flex items-center justify-between"
+              >
+                <span>📊 Chọn cột cần xuất ({selectedColumns.size}/{DETAIL_COLUMNS.length})</span>
+                <span>{showColumnSelection ? "▼" : "▶"}</span>
+              </button>
+
+              {showColumnSelection && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-2 space-y-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {DETAIL_COLUMNS.map((col) => (
+                      <label key={col.key} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedColumns.has(col.key)}
+                          onChange={(e) => {
+                            const newSelected = new Set(selectedColumns);
+                            if (e.target.checked) {
+                              newSelected.add(col.key);
+                            } else {
+                              newSelected.delete(col.key);
+                            }
+                            setSelectedColumns(newSelected);
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-700">{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 mt-3 pt-2 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColumns(new Set(DETAIL_COLUMNS.map((c) => c.key)))}
+                      className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded text-sm font-semibold hover:bg-blue-200 transition"
+                    >
+                      Chọn tất cả
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColumns(new Set())}
+                      className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded text-sm font-semibold hover:bg-gray-300 transition"
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
             <p className="font-semibold mb-1">{vi.export.reportDetails}:</p>

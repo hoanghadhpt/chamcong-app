@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
-    const { fromDate, toDate, format = "detail" } = await request.json();
+    const { fromDate, toDate, format = "detail", selectedColumns } = await request.json();
 
     if (!fromDate || !toDate) {
       return NextResponse.json(
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         shiftAmount: record.shift_amount || 1.0,
       }));
 
-      buffer = await generateDetailExcel(fromDate, toDate, detailData);
+      buffer = await generateDetailExcel(fromDate, toDate, detailData, selectedColumns);
       filename = `attendance_detail_${fromDate}_to_${toDate}.xlsx`;
     }
 

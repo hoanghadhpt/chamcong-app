@@ -34,37 +34,46 @@ const STATUS_CODES: { [key: string]: string } = {
   ot: "OT",
 };
 
+const ALL_DETAIL_COLUMNS = [
+  { header: "Ngày", key: "date", width: 12 },
+  { header: "Mã NV", key: "workerCode", width: 10 },
+  { header: "Họ tên", key: "workerName", width: 20 },
+  { header: "Bộ phận", key: "team", width: 15 },
+  { header: "Trạng thái", key: "status", width: 12 },
+  { header: "Loại ca", key: "shiftAmount", width: 10 },
+  { header: "Vào", key: "checkIn", width: 10 },
+  { header: "Ra", key: "checkOut", width: 10 },
+  { header: "Trễ (phút)", key: "lateMinutes", width: 10 },
+  { header: "Sớm (phút)", key: "earlyMinutes", width: 10 },
+  { header: "OT 1.5x", key: "ot_1_5", width: 8 },
+  { header: "OT 2.0x", key: "ot_2_0", width: 8 },
+  { header: "OT 3.0x", key: "ot_3_0", width: 8 },
+  { header: "Ghi chú", key: "note", width: 20 },
+];
+
 export async function generateDetailExcel(
   fromDate: string,
   toDate: string,
-  attendanceData: DetailRecord[]
+  attendanceData: DetailRecord[],
+  selectedColumns?: string[]
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Chi tiết");
 
+  // Filter columns based on selection, default to all if not specified
+  const columnsToUse = selectedColumns
+    ? ALL_DETAIL_COLUMNS.filter((col) => selectedColumns.includes(col.key))
+    : ALL_DETAIL_COLUMNS;
+
   // Set column widths
-  worksheet.columns = [
-    { header: "Ngày", key: "date", width: 12 },
-    { header: "Mã NV", key: "workerCode", width: 10 },
-    { header: "Họ tên", key: "workerName", width: 20 },
-    { header: "Bộ phận", key: "team", width: 15 },
-    { header: "Trạng thái", key: "status", width: 12 },
-    { header: "Loại ca", key: "shiftAmount", width: 10 },
-    { header: "Vào", key: "checkIn", width: 10 },
-    { header: "Ra", key: "checkOut", width: 10 },
-    { header: "Trễ (phút)", key: "lateMinutes", width: 10 },
-    { header: "Sớm (phút)", key: "earlyMinutes", width: 10 },
-    { header: "OT 1.5x", key: "ot_1_5", width: 8 },
-    { header: "OT 2.0x", key: "ot_2_0", width: 8 },
-    { header: "OT 3.0x", key: "ot_3_0", width: 8 },
-    { header: "Ghi chú", key: "note", width: 20 },
-  ];
+  worksheet.columns = columnsToUse;
 
   // Add title
   const titleCell = worksheet.getCell("A1");
   titleCell.value = `Báo cáo chấm công: ${formatDate(fromDate)} đến ${formatDate(toDate)}`;
   titleCell.font = { bold: true, size: 14 };
-  worksheet.mergeCells("A1:N1");
+  const lastCol = String.fromCharCode(64 + columnsToUse.length); // Convert number to letter (1=A, 2=B, etc.)
+  worksheet.mergeCells(`A1:${lastCol}1`);
 
   // Style header row
   const headerRow = worksheet.getRow(2);

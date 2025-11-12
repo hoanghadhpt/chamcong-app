@@ -101,6 +101,7 @@ export const vi = {
     active: "Hoạt động",
     inactive: "Không hoạt động",
     import: "Nhập CSV",
+    downloadTemplate: "Tải mẫu",
     export: "Xuất CSV",
     importSuccess: "Nhập {count} nhân viên thành công",
     importPartial: "Nhập {count} nhân viên thành công ({errors} lỗi)",

@@ -63,6 +63,9 @@ export default function HomePage() {
   const [batchMarking, setBatchMarking] = useState<string | null>(null);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -123,14 +126,14 @@ export default function HomePage() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []);
+  }, [selectedDate]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [workersRes, attendanceRes] = await Promise.all([
         fetch("/api/workers"),
-        fetch(`/api/attendance?date=${today}`),
+        fetch(`/api/attendance?date=${selectedDate}`),
       ]);
 
       if (workersRes.ok) {
@@ -163,7 +166,7 @@ export default function HomePage() {
     const updated: AttendanceRecord = {
       id: existing?.id || 0,
       worker_id: workerId,
-      work_date: today,
+      work_date: selectedDate,
       status: status,
       check_in: isCheckIn
         ? getCurrentTime()
@@ -182,7 +185,7 @@ export default function HomePage() {
     const updated: AttendanceRecord = {
       id: existing?.id || 0,
       worker_id: workerId,
-      work_date: today,
+      work_date: selectedDate,
       status: existing?.status || "present",
       check_in: existing?.check_in || null,
       check_out: getCurrentTime(),
@@ -204,14 +207,14 @@ export default function HomePage() {
         body: JSON.stringify({
           teamName,
           status,
-          workDate: today,
+          workDate: selectedDate,
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
         // Refresh attendance data
-        const attendanceRes = await fetch(`/api/attendance?date=${today}`);
+        const attendanceRes = await fetch(`/api/attendance?date=${selectedDate}`);
         if (attendanceRes.ok) {
           const attendanceData = await attendanceRes.json();
           const attendanceMap = new Map();
@@ -323,9 +326,33 @@ export default function HomePage() {
   return (
     <div className="space-y-4 pb-24">
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-2xl font-bold text-primary mb-2">{vi.attendance.title}</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">{vi.attendance.title}</h2>
+
+        {/* Date selector */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {vi.attendance.dateLabel}
+          </label>
+          <div className="flex gap-2 items-center">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setChanges(new Map()); // Clear unsaved changes when changing date
+              }}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base"
+            />
+            {selectedDate === today && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-3 py-2 rounded-lg font-semibold">
+                {vi.attendance.today}
+              </span>
+            )}
+          </div>
+        </div>
+
         <p className="text-gray-600">
-          {new Date(today).toLocaleDateString("vi-VN", {
+          {new Date(selectedDate).toLocaleDateString("vi-VN", {
             weekday: "long",
             year: "numeric",
             month: "long",
