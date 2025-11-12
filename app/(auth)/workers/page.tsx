@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Toast from "@/components/Toast";
+import WorkersTable from "@/components/WorkersTable";
 import { vi } from "@/lib/i18n";
 
 interface Worker {
@@ -36,6 +37,8 @@ export default function WorkersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -253,7 +256,7 @@ export default function WorkersPage() {
   }
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto p-4 lg:p-6 xl:p-8">
+    <div className="space-y-4 p-4 lg:p-6 xl:p-8">
       <div className="bg-white rounded-xl shadow-md p-4 lg:p-6">
         <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-4 lg:mb-6">{vi.workers.title}</h2>
 
@@ -307,6 +310,54 @@ export default function WorkersPage() {
             onChange={handleImport}
             className="hidden"
           />
+        </div>
+
+        {/* Search Bar + View Mode Toggle */}
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-center mb-4 lg:mb-6">
+          {/* Search Input */}
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="🔍 Tìm theo tên, mã NV, bộ phận, SĐT..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 lg:px-5 py-3 lg:py-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* View Mode Toggle - Desktop only */}
+          <div className="hidden lg:flex gap-2 bg-white rounded-lg p-1 shadow-md border border-gray-200">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
+                viewMode === "table"
+                  ? "bg-accent text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              📊 Bảng
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
+                viewMode === "card"
+                  ? "bg-accent text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              📇 Thẻ
+            </button>
+          </div>
         </div>
 
         {showForm && (
@@ -363,45 +414,82 @@ export default function WorkersPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
-        {workers.length === 0 ? (
-          <div className="text-center py-8 text-gray-600 lg:col-span-2 xl:col-span-3">
-            {vi.workers.emptyState}
-          </div>
-        ) : (
-          workers.map((worker) => (
-            <div
-              key={worker.id}
-              className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 lg:p-5 flex flex-col gap-3"
-            >
-              <div className="flex-1">
-                <p className="font-bold text-base lg:text-lg">{worker.name}</p>
-                <p className="text-sm lg:text-base text-gray-600">
-                  {worker.code} | {worker.team || vi.workers.noTeam}
-                </p>
-                {worker.phone && (
-                  <p className="text-sm lg:text-base text-gray-600">{worker.phone}</p>
-                )}
-              </div>
+      {/* Table View (Desktop) */}
+      {viewMode === "table" && (
+        <div className="hidden lg:block">
+          <WorkersTable
+            workers={workers}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            searchQuery={searchQuery}
+          />
+        </div>
+      )}
 
-              {/* Action buttons - responsive */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(worker)}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
-                >
-                  {vi.common.edit}
-                </button>
-                <button
-                  onClick={() => handleDelete(worker.id)}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
-                >
-                  {vi.common.delete}
-                </button>
-              </div>
+      {/* Card View (Mobile + Desktop option) */}
+      <div className={viewMode === "table" ? "lg:hidden" : ""}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
+          {workers.length === 0 ? (
+            <div className="text-center py-8 text-gray-600 lg:col-span-2 xl:col-span-3">
+              {vi.workers.emptyState}
             </div>
-          ))
-        )}
+          ) : (
+            workers
+              .filter((worker) => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  worker.name.toLowerCase().includes(query) ||
+                  worker.code.toLowerCase().includes(query) ||
+                  (worker.team || "").toLowerCase().includes(query) ||
+                  (worker.phone || "").toLowerCase().includes(query)
+                );
+              })
+              .map((worker) => (
+                <div
+                  key={worker.id}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 lg:p-5 flex flex-col gap-3"
+                >
+                  <div className="flex-1">
+                    <p className="font-bold text-base lg:text-lg">{worker.name}</p>
+                    <p className="text-sm lg:text-base text-gray-600">
+                      {worker.code} | {worker.team || vi.workers.noTeam}
+                    </p>
+                    {worker.phone && (
+                      <p className="text-sm lg:text-base text-gray-600">{worker.phone}</p>
+                    )}
+                    <div className="mt-2">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
+                          worker.active === 1
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {worker.active === 1 ? "✅ Đang làm" : "❌ Đã nghỉ"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action buttons - responsive */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(worker)}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
+                    >
+                      {vi.common.edit}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(worker.id)}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
+                    >
+                      {vi.common.delete}
+                    </button>
+                  </div>
+                </div>
+              ))
+          )}
+        </div>
       </div>
 
       {/* Import Preview Modal */}

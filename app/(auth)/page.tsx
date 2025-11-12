@@ -5,6 +5,7 @@ import Toast from "@/components/Toast";
 import DateHeader from "@/components/DateHeader";
 import TeamFilter from "@/components/TeamFilter";
 import TeamSection from "@/components/TeamSection";
+import AttendanceTable from "@/components/AttendanceTable";
 import BottomSaveBar from "@/components/BottomSaveBar";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import { getOfflineQueue, addToQueue, removeFromQueue } from "@/lib/offlineQueue";
@@ -62,6 +63,7 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   // Toggle team expansion (optimized with useCallback)
   const toggleTeamExpanded = useCallback((team: string) => {
@@ -340,49 +342,93 @@ export default function HomePage() {
       {/* Offline Indicator */}
       <OfflineIndicator />
 
-      <div className="space-y-4 pb-28 lg:pb-8 bg-beige-50 min-h-screen p-4 lg:p-6 xl:p-8 max-w-7xl mx-auto">
+      <div className="space-y-4 pb-28 lg:pb-8 bg-beige-50 min-h-screen p-4 lg:p-6 xl:p-8">
         {/* Date Header */}
         <DateHeader
           selectedDate={selectedDate}
           onDateChange={handleDateChange}
         />
 
-        {/* Team Filter / Search */}
-        <TeamFilter
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onExpandAll={() => setExpandedTeams(new Set(filteredTeams.keys()))}
-          onCollapseAll={() => setExpandedTeams(new Set())}
-        />
+        {/* Team Filter / Search + View Mode Toggle */}
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
+          <div className="flex-1">
+            <TeamFilter
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onExpandAll={() => setExpandedTeams(new Set(filteredTeams.keys()))}
+              onCollapseAll={() => setExpandedTeams(new Set())}
+            />
+          </div>
 
-        {/* Team Sections - Multi-column layout on large screens */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 xl:gap-4">
-          {filteredTeams.size === 0 ? (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center xl:col-span-2">
-              <div className="text-3xl mb-2">🔍</div>
-              <p className="text-yellow-800 font-medium">
-                {searchQuery
-                  ? `Không tìm thấy tổ hoặc nhân viên phù hợp với "${searchQuery}"`
-                  : "Không có tổ nào"}
-              </p>
-            </div>
-          ) : (
-            Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => (
-              <TeamSection
-                key={team}
-                teamName={team}
-                workers={teamWorkers}
-                attendance={attendance}
-                changes={changes}
-                isExpanded={expandedTeams.has(team)}
-                onToggleExpand={() => toggleTeamExpanded(team)}
-                onStatusChange={handleStatusChange}
-                onCheckOut={handleCheckOut}
-                onBatchMark={handleBatchMark}
-                batchMarking={batchMarking}
-              />
-            ))
-          )}
+          {/* View Mode Toggle - Desktop only */}
+          <div className="hidden lg:flex gap-2 bg-white rounded-lg p-1 shadow-md">
+            <button
+              onClick={() => setViewMode("table")}
+              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
+                viewMode === "table"
+                  ? "bg-accent text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              📊 Bảng
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
+                viewMode === "card"
+                  ? "bg-accent text-white shadow-md"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              📇 Thẻ
+            </button>
+          </div>
+        </div>
+
+        {/* Table View (Desktop) */}
+        {viewMode === "table" && (
+          <div className="hidden lg:block">
+            <AttendanceTable
+              workers={workers}
+              attendance={attendance}
+              changes={changes}
+              onStatusChange={handleStatusChange}
+              onCheckOut={handleCheckOut}
+              searchQuery={searchQuery}
+            />
+          </div>
+        )}
+
+        {/* Card View (Mobile + Desktop option) */}
+        <div className={viewMode === "table" ? "lg:hidden" : ""}>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 xl:gap-4">
+            {filteredTeams.size === 0 ? (
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center xl:col-span-2">
+                <div className="text-3xl mb-2">🔍</div>
+                <p className="text-yellow-800 font-medium">
+                  {searchQuery
+                    ? `Không tìm thấy tổ hoặc nhân viên phù hợp với "${searchQuery}"`
+                    : "Không có tổ nào"}
+                </p>
+              </div>
+            ) : (
+              Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => (
+                <TeamSection
+                  key={team}
+                  teamName={team}
+                  workers={teamWorkers}
+                  attendance={attendance}
+                  changes={changes}
+                  isExpanded={expandedTeams.has(team)}
+                  onToggleExpand={() => toggleTeamExpanded(team)}
+                  onStatusChange={handleStatusChange}
+                  onCheckOut={handleCheckOut}
+                  onBatchMark={handleBatchMark}
+                  batchMarking={batchMarking}
+                />
+              ))
+            )}
+          </div>
         </div>
 
         {/* Bottom Save Bar */}

@@ -27,12 +27,13 @@ export default function Navigation() {
   const navItems = [
     { path: "/", label: "Chấm công", icon: "✅" },
     { path: "/workers", label: "Nhân viên", icon: "👥" },
-    { path: "/export", label: "Xuất BC", icon: "📊" },
+    { path: "/reports", label: "Báo cáo", icon: "📊" },
+    { path: "/export", label: "Xuất BC", icon: "💾" },
   ];
 
   return (
     <nav className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white sticky top-0 z-50 shadow-xl border-b-2 border-accent/30">
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 xl:px-8 py-3">
+      <div className="px-4 lg:px-6 xl:px-8 py-3">
         {/* Header with Logo and Logout */}
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
@@ -52,11 +53,15 @@ export default function Navigation() {
         <div className="flex gap-2 overflow-x-auto lg:overflow-x-visible lg:justify-center pb-1 scrollbar-hide">
           {navItems.map((item) => {
             const active = isActive(item.path);
+            // Hide "Báo cáo" on mobile (desktop only)
+            const isReportsPage = item.path === "/reports";
+            const responsiveClass = isReportsPage ? "hidden lg:flex" : "flex";
+
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl font-bold transition-all whitespace-nowrap text-sm lg:text-base flex items-center gap-2 shadow-md ${
+                className={`${responsiveClass} px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl font-bold transition-all whitespace-nowrap text-sm lg:text-base items-center gap-2 shadow-md ${
                   active
                     ? "bg-gradient-to-r from-accent to-accent-light text-white scale-105 shadow-accent/50"
                     : "bg-beige-100/10 hover:bg-beige-100/20 active:bg-beige-100/30 text-beige-100 border border-beige-100/20"
