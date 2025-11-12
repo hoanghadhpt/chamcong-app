@@ -55,10 +55,17 @@ export async function POST(request: NextRequest) {
 
       attendanceData.forEach((record) => {
         const key = `${record.worker_id}:${record.work_date}`;
-        attendanceMap[key] = statusCodes[record.status] || "";
+        attendanceMap[key] = record.status ? (statusCodes[record.status as keyof typeof statusCodes] || "") : "";
       });
 
-      buffer = await generateMatrixExcel(month, year, workers, attendanceMap);
+      const workersForMatrix = workers.map((w) => ({
+        id: w.id,
+        code: w.code,
+        name: w.name,
+        team: w.team || "",
+      }));
+
+      buffer = await generateMatrixExcel(month, year, workersForMatrix, attendanceMap);
       filename = `attendance_matrix_${month}_${year}.xlsx`;
     } else {
       // Detail format
@@ -82,7 +89,7 @@ export async function POST(request: NextRequest) {
       filename = `attendance_detail_${fromDate}_to_${toDate}.xlsx`;
     }
 
-    const response = new NextResponse(buffer, {
+    const response = new NextResponse(Buffer.from(buffer) as any, {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

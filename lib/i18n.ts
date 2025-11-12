@@ -50,6 +50,10 @@ export const vi = {
     copyYesterday: "Sao chép hôm qua",
     saveAll: "Lưu tất cả",
     saving: "Đang lưu",
+    batchMark: "Đánh dấu cả tổ",
+    batchMarking: "Đang đánh dấu tổ...",
+    batchSuccess: "Đã đánh dấu {count} nhân viên tổ {team} là {status}",
+    batchError: "Lỗi khi đánh dấu tổ",
     status: {
       present: "Có mặt",
       absent: "Vắng",

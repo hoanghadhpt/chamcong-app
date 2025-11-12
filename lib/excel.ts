@@ -72,7 +72,7 @@ export async function generateDetailExcel(
     pattern: "solid",
     fgColor: { argb: "FF1F2937" },
   };
-  headerRow.alignment = { horizontal: "center", vertical: "center" };
+  headerRow.alignment = { horizontal: "center" as any, vertical: "middle" as any };
 
   // Add data (starting from row 3)
   let rowNum = 3;
@@ -102,7 +102,7 @@ export async function generateDetailExcel(
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      cell.alignment = { horizontal: "center", vertical: "center", wrapText: true };
+      cell.alignment = { horizontal: "center" as any, vertical: "middle" as any, wrapText: true };
     });
 
     rowNum++;
@@ -110,10 +110,10 @@ export async function generateDetailExcel(
 
   // Freeze header rows
   worksheet.views = [
-    { state: "frozen", ySplit: 2, activeCell: "A3", activePane: "bottomRight" },
+    { state: "frozen", ySplit: 2, xSplit: 3, activeCell: "D3" } as any,
   ];
 
-  return (await workbook.xlsx.writeBuffer()) as Buffer;
+  return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
 }
 
 export async function generateMatrixExcel(
@@ -173,7 +173,7 @@ export async function generateMatrixExcel(
     pattern: "solid",
     fgColor: { argb: "FF1F2937" },
   };
-  headerRow.alignment = { horizontal: "center", vertical: "center" };
+  headerRow.alignment = { horizontal: "center" as any, vertical: "middle" as any };
 
   // Add worker data
   let rowNum = 3;
@@ -229,7 +229,7 @@ export async function generateMatrixExcel(
         bottom: { style: "thin" },
         right: { style: "thin" },
       };
-      cell.alignment = { horizontal: "center", vertical: "center" };
+      cell.alignment = { horizontal: "center" as any, vertical: "middle" as any };
 
       // Bold day columns if weekend
       if (colNum > 3) {
@@ -255,10 +255,10 @@ export async function generateMatrixExcel(
 
   // Freeze panes
   worksheet.views = [
-    { state: "frozen", xSplit: 3, ySplit: 2, activeCell: "D3", activePane: "bottomRight" },
+    { state: "frozen", xSplit: 3, ySplit: 2, activeCell: "D3" } as any,
   ];
 
-  return (await workbook.xlsx.writeBuffer()) as Buffer;
+  return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
 }
 
 function getStatusLabel(status: string): string {

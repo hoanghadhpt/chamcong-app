@@ -31,6 +31,19 @@ const STATUS_OPTIONS = [
   { key: "ot", label: vi.attendance.statusOT },
 ];
 
+// Get unique teams and group workers by team
+const groupWorkersByTeam = (workers: Worker[]): Map<string, Worker[]> => {
+  const groups = new Map<string, Worker[]>();
+  workers.forEach((worker) => {
+    const team = worker.team || "Không có bộ phận";
+    if (!groups.has(team)) {
+      groups.set(team, []);
+    }
+    groups.get(team)!.push(worker);
+  });
+  return groups;
+};
+
 export default function HomePage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [attendance, setAttendance] = useState<Map<number, AttendanceRecord>>(
@@ -46,6 +59,7 @@ export default function HomePage() {
   const [changes, setChanges] = useState<Map<number, AttendanceRecord>>(
     new Map()
   );
+  const [batchMarking, setBatchMarking] = useState<string | null>(null);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -130,6 +144,49 @@ export default function HomePage() {
     setChanges(newChanges);
   };
 
+  const handleBatchMark = async (teamName: string, status: string) => {
+    setBatchMarking(teamName);
+
+    try {
+      const response = await fetch("/api/attendance/batch-mark", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamName,
+          status,
+          workDate: today,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Refresh attendance data
+        const attendanceRes = await fetch(`/api/attendance?date=${today}`);
+        if (attendanceRes.ok) {
+          const attendanceData = await attendanceRes.json();
+          const attendanceMap = new Map();
+          attendanceData.forEach((record: AttendanceRecord) => {
+            attendanceMap.set(record.worker_id, record);
+          });
+          setAttendance(attendanceMap);
+        }
+
+        const statusLabel = STATUS_OPTIONS.find((o) => o.key === status)?.label || status;
+        setToast({
+          message: `Đã đánh dấu ${result.updated} nhân viên tổ ${teamName} là ${statusLabel}`,
+        });
+      } else {
+        const data = await response.json();
+        setToast({ message: data.error || "Lỗi khi đánh dấu tổ" });
+      }
+    } catch (error) {
+      console.error("Error batch marking:", error);
+      setToast({ message: "Lỗi khi đánh dấu tổ" });
+    } finally {
+      setBatchMarking(null);
+    }
+  };
+
   const saveAll = async () => {
     if (changes.size === 0) {
       setToast({ message: vi.common.noChanges });
@@ -148,7 +205,7 @@ export default function HomePage() {
           body: JSON.stringify({
             workerId: record.worker_id,
             workDate: record.work_date,
-            status: record.status,
+            status: record.status || "present",
             checkIn: record.check_in,
             checkOut: record.check_out,
           }),
@@ -177,7 +234,7 @@ export default function HomePage() {
             addToQueue({
               workerId: record.worker_id,
               workDate: record.work_date,
-              status: record.status,
+              status: record.status || "present",
               checkIn: record.check_in,
               checkOut: record.check_out,
             });
@@ -225,56 +282,99 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className="space-y-3">
-        {workers.map((worker) => {
-          const current = changes.get(worker.id) || attendance.get(worker.id);
+      <div className="space-y-6">
+        {Array.from(groupWorkersByTeam(workers).entries()).map(([team, teamWorkers]) => {
+          const presentCount = teamWorkers.filter((w) => {
+            const current = changes.get(w.id) || attendance.get(w.id);
+            return current?.status === "present";
+          }).length;
 
           return (
-            <div
-              key={worker.id}
-              className="bg-white rounded-lg shadow p-4 border-l-4 border-accent"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-bold text-lg">{worker.name}</p>
-                  <p className="text-sm text-gray-600">
-                    Code: {worker.code} | Team: {worker.team || "N/A"}
-                  </p>
+            <div key={team} className="bg-white rounded-lg shadow overflow-hidden">
+              {/* Team Header */}
+              <div className="bg-gradient-to-r from-primary to-blue-800 text-white p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-xl font-bold">{team}</h3>
+                    <p className="text-blue-100">
+                      {presentCount}/{teamWorkers.length} {vi.attendance.statusPresent}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Batch Mark Buttons */}
+                <div className="flex gap-2 flex-wrap">
+                  {STATUS_OPTIONS.map((option) => (
+                    <button
+                      key={`batch-${option.key}`}
+                      onClick={() => handleBatchMark(team, option.key)}
+                      disabled={batchMarking === team}
+                      className="px-4 py-2 bg-white text-primary hover:bg-blue-50 font-semibold rounded transition text-sm disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                    >
+                      {batchMarking === team ? "Đang xử lý..." : `Đánh dấu cả ${option.label}`}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="flex gap-2 flex-wrap">
-                {STATUS_OPTIONS.map((option) => (
-                  <button
-                    key={option.key}
-                    onClick={() => handleStatusChange(worker.id, option.key)}
-                    className={`px-4 py-2 rounded font-semibold transition uppercase text-sm ${
-                      current?.status === option.key
-                        ? "bg-accent text-white"
-                        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+              {/* Team Workers */}
+              <div className="space-y-2 p-4">
+                {teamWorkers.map((worker) => {
+                  const current = changes.get(worker.id) || attendance.get(worker.id);
 
-              {current?.status === "present" && (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => handleStatusChange(worker.id, "present", true)}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded font-semibold transition text-sm"
-                  >
-                    {vi.attendance.checkIn}: {current.check_in || "---"}
-                  </button>
-                  <button
-                    onClick={() => handleCheckOut(worker.id)}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded font-semibold transition text-sm"
-                  >
-                    {vi.attendance.checkOut}: {current.check_out || "---"}
-                  </button>
-                </div>
-              )}
+                  return (
+                    <div
+                      key={worker.id}
+                      className="bg-gray-50 rounded-lg p-3 border-l-4 border-accent"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-bold text-base">{worker.name}</p>
+                          <p className="text-xs text-gray-600">{worker.code}</p>
+                        </div>
+                        {current?.status && (
+                          <span className="text-xs font-semibold px-2 py-1 bg-accent text-white rounded">
+                            {STATUS_OPTIONS.find((o) => o.key === current.status)?.label}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2 flex-wrap">
+                        {STATUS_OPTIONS.map((option) => (
+                          <button
+                            key={option.key}
+                            onClick={() => handleStatusChange(worker.id, option.key)}
+                            className={`px-2 py-1 rounded font-semibold transition text-xs ${
+                              current?.status === option.key
+                                ? "bg-accent text-white"
+                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            }`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {current?.status === "present" && (
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={() => handleStatusChange(worker.id, "present", true)}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded font-semibold transition text-xs"
+                          >
+                            {vi.attendance.checkIn}: {current.check_in || "---"}
+                          </button>
+                          <button
+                            onClick={() => handleCheckOut(worker.id)}
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded font-semibold transition text-xs"
+                          >
+                            {vi.attendance.checkOut}: {current.check_out || "---"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           );
         })}
