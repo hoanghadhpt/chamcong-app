@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }

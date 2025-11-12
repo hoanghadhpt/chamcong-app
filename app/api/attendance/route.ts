@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
     let records;
 
     if (date) {
-      records = getAttendanceByDate(userId, date);
+      records = await getAttendanceByDate(userId, date);
     } else if (fromDate && toDate) {
-      records = getAttendanceByDateRange(userId, fromDate, toDate);
+      records = await getAttendanceByDateRange(userId, fromDate, toDate);
     } else {
       return NextResponse.json(
         { error: "Please provide date or date range (from/to)" },
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const record = upsertAttendance(
+    const record = await upsertAttendance(
       userId,
       workerId,
       workDate,

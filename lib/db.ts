@@ -1,45 +1,57 @@
-import Database from "better-sqlite3";
-import path from "path";
-import { execSync } from "child_process";
+import { Pool, PoolClient, QueryResult } from "pg";
 
-let db: Database.Database | null = null;
+let pool: Pool | null = null;
 
-const DB_PATH = path.join(process.cwd(), "data.db");
-
-export function getDB(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma("journal_mode = WAL");
-    db.pragma("foreign_keys = ON");
-    initializeSchema();
+// Get DATABASE_URL from environment variables
+function getDatabaseUrl(): string {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL environment variable is not set");
   }
-  return db;
+  return databaseUrl;
 }
 
-function initializeSchema() {
-  const database = db!;
+export function getDB(): Pool {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: getDatabaseUrl(),
+      max: 20, // Maximum number of clients in the pool
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+
+    // Initialize schema on first connection
+    initializeSchema().catch((err) => {
+      console.error("Failed to initialize database schema:", err);
+      throw err;
+    });
+  }
+  return pool;
+}
+
+async function initializeSchema() {
+  const database = getDB();
 
   // Check if sessions table exists and has user_agent column
-  const sessionTableExists = database
-    .prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='sessions'"
-    )
-    .get() as { name: string } | undefined;
+  const sessionTableResult = await database.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'sessions'`
+  );
 
-  if (sessionTableExists) {
+  if (sessionTableResult.rows.length > 0) {
     // Check if user_agent column exists
-    const sessionColumns = database
-      .prepare(
-        "PRAGMA table_info(sessions);"
-      )
-      .all() as Array<{ name: string }>;
+    const sessionColumnsResult = await database.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'sessions'`
+    );
 
-    const hasUserAgent = sessionColumns.some((col) => col.name === "user_agent");
+    const columnNames = sessionColumnsResult.rows.map((row) => row.column_name);
+    const hasUserAgent = columnNames.includes("user_agent");
 
     if (!hasUserAgent) {
       // Migrate existing sessions table by adding missing columns
       console.log("Migrating sessions table: adding user_agent and ip columns...");
-      database.exec(`
+      await database.query(`
         ALTER TABLE sessions ADD COLUMN user_agent TEXT;
         ALTER TABLE sessions ADD COLUMN ip TEXT;
       `);
@@ -47,20 +59,18 @@ function initializeSchema() {
   }
 
   // Check if attendance table exists and add missing columns if needed
-  const attendanceTableExists = database
-    .prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='attendance'"
-    )
-    .get() as { name: string } | undefined;
+  const attendanceTableResult = await database.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'attendance'`
+  );
 
-  if (attendanceTableExists) {
-    const attendanceColumns = database
-      .prepare(
-        "PRAGMA table_info(attendance);"
-      )
-      .all() as Array<{ name: string }>;
+  if (attendanceTableResult.rows.length > 0) {
+    const attendanceColumnsResult = await database.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'attendance'`
+    );
 
-    const columnNames = attendanceColumns.map((col) => col.name);
+    const columnNames = attendanceColumnsResult.rows.map((row) => row.column_name);
     const needsLateMinutes = !columnNames.includes("late_minutes");
     const needsEarlyMinutes = !columnNames.includes("early_minutes");
     const needsOT = !columnNames.includes("ot_1_5");
@@ -80,29 +90,28 @@ function initializeSchema() {
       if (needsShiftId) alterStmts.push("ALTER TABLE attendance ADD COLUMN shift_id INTEGER REFERENCES shifts(id);");
       if (needsShiftAmount) alterStmts.push("ALTER TABLE attendance ADD COLUMN shift_amount REAL DEFAULT 1.0;");
 
-      database.exec(alterStmts.join("\n"));
+      await database.query(alterStmts.join("\n"));
     }
   }
 
-  // Check if all new tables exist
-  const tables = database
-    .prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'sessions', 'workers', 'shifts', 'settings', 'holidays', 'attendance')"
-    )
-    .all() as { name: string }[];
+  // Check if all tables exist
+  const tablesResult = await database.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name IN ('users', 'sessions', 'workers', 'shifts', 'settings', 'holidays', 'attendance')`
+  );
 
-  if (tables.length === 7) {
+  if (tablesResult.rows.length === 7) {
     return; // Schema fully updated
   }
 
   // Create tables if they don't exist
-  database.exec(`
+  await database.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       display_name TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS sessions (
@@ -110,13 +119,13 @@ function initializeSchema() {
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       user_agent TEXT,
       ip TEXT,
-      expires_at TEXT NOT NULL
+      expires_at TIMESTAMP NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS workers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      code TEXT NOT NULL,
+      code VARCHAR(255) NOT NULL,
       name TEXT NOT NULL,
       phone TEXT,
       team TEXT,
@@ -125,7 +134,7 @@ function initializeSchema() {
     );
 
     CREATE TABLE IF NOT EXISTS shifts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       start_time TEXT NOT NULL,
@@ -141,27 +150,27 @@ function initializeSchema() {
       late_grace INTEGER DEFAULT 5,
       early_grace INTEGER DEFAULT 5,
       default_shift_id INTEGER REFERENCES shifts(id),
-      locale TEXT DEFAULT 'vi-VN',
-      tz TEXT DEFAULT 'Asia/Ho_Chi_Minh',
+      locale VARCHAR(20) DEFAULT 'vi-VN',
+      tz VARCHAR(50) DEFAULT 'Asia/Ho_Chi_Minh',
       enable_gps INTEGER DEFAULT 0,
       enable_selfie INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS holidays (
       manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      date TEXT NOT NULL,
+      date DATE NOT NULL,
       name TEXT NOT NULL,
       PRIMARY KEY (manager_id, date)
     );
 
     CREATE TABLE IF NOT EXISTS attendance (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       worker_id INTEGER NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
-      work_date TEXT NOT NULL,
+      work_date DATE NOT NULL,
       status TEXT,
-      check_in TEXT,
-      check_out TEXT,
+      check_in TIMESTAMP,
+      check_out TIMESTAMP,
       late_minutes INTEGER,
       early_minutes INTEGER,
       ot_1_5 INTEGER DEFAULT 0,
@@ -184,9 +193,9 @@ function initializeSchema() {
   `);
 }
 
-export function closeDB() {
-  if (db) {
-    db.close();
-    db = null;
+export async function closeDB() {
+  if (pool) {
+    await pool.end();
+    pool = null;
   }
 }

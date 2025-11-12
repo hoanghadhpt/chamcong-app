@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       }
 
       const transformedRecords = transformRecordsByMapping(records, mapping);
-      const result = importWorkers(userId, transformedRecords);
+      const result = await importWorkers(userId, transformedRecords);
 
       return NextResponse.json(result);
     }

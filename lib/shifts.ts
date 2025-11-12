@@ -10,45 +10,42 @@ export interface Shift {
   is_overnight: number;
 }
 
-export function getShiftsByManagerId(managerId: number): Shift[] {
+export async function getShiftsByManagerId(managerId: number): Promise<Shift[]> {
   const db = getDB();
-  return db
-    .prepare("SELECT * FROM shifts WHERE manager_id = ? ORDER BY start_time ASC")
-    .all(managerId) as Shift[];
+  const result = await db.query(
+    "SELECT * FROM shifts WHERE manager_id = $1 ORDER BY start_time ASC",
+    [managerId]
+  );
+  return result.rows as Shift[];
 }
 
-export function getShiftById(shiftId: number): Shift | undefined {
+export async function getShiftById(shiftId: number): Promise<Shift | undefined> {
   const db = getDB();
-  return db
-    .prepare("SELECT * FROM shifts WHERE id = ?")
-    .get(shiftId) as Shift | undefined;
+  const result = await db.query(
+    "SELECT * FROM shifts WHERE id = $1",
+    [shiftId]
+  );
+  return result.rows[0] as Shift | undefined;
 }
 
-export function createShift(
+export async function createShift(
   managerId: number,
   name: string,
   startTime: string,
   endTime: string,
   breakMinutes: number = 0,
   isOvernight: number = 0
-): Shift {
+): Promise<Shift> {
   const db = getDB();
-  const stmt = db.prepare(
-    "INSERT INTO shifts (manager_id, name, start_time, end_time, break_minutes, is_overnight) VALUES (?, ?, ?, ?, ?, ?)"
-  );
-  const result = stmt.run(
-    managerId,
-    name,
-    startTime,
-    endTime,
-    breakMinutes,
-    isOvernight
+  const result = await db.query(
+    "INSERT INTO shifts (manager_id, name, start_time, end_time, break_minutes, is_overnight) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+    [managerId, name, startTime, endTime, breakMinutes, isOvernight]
   );
 
-  return getShiftById(result.lastInsertRowid as number)!;
+  return result.rows[0] as Shift;
 }
 
-export function updateShift(
+export async function updateShift(
   shiftId: number,
   managerId: number,
   name: string,
@@ -56,20 +53,22 @@ export function updateShift(
   endTime: string,
   breakMinutes: number,
   isOvernight: number
-): Shift {
+): Promise<Shift> {
   const db = getDB();
-  db.prepare(
-    "UPDATE shifts SET name = ?, start_time = ?, end_time = ?, break_minutes = ?, is_overnight = ? WHERE id = ? AND manager_id = ?"
-  ).run(name, startTime, endTime, breakMinutes, isOvernight, shiftId, managerId);
+  await db.query(
+    "UPDATE shifts SET name = $1, start_time = $2, end_time = $3, break_minutes = $4, is_overnight = $5 WHERE id = $6 AND manager_id = $7",
+    [name, startTime, endTime, breakMinutes, isOvernight, shiftId, managerId]
+  );
 
-  return getShiftById(shiftId)!;
+  const shift = await getShiftById(shiftId);
+  return shift!;
 }
 
-export function deleteShift(shiftId: number, managerId: number): void {
+export async function deleteShift(shiftId: number, managerId: number): Promise<void> {
   const db = getDB();
-  db.prepare("DELETE FROM shifts WHERE id = ? AND manager_id = ?").run(
-    shiftId,
-    managerId
+  await db.query(
+    "DELETE FROM shifts WHERE id = $1 AND manager_id = $2",
+    [shiftId, managerId]
   );
 }
 

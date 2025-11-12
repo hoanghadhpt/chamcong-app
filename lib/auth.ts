@@ -33,78 +33,83 @@ export interface Session {
   expires_at: string;
 }
 
-export function createUser(
+export async function createUser(
   email: string,
   passwordHash: string,
   displayName: string
-): User {
+): Promise<User> {
   const db = getDB();
-  const stmt = db.prepare(
-    "INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)"
+  const result = await db.query(
+    "INSERT INTO users (email, password_hash, display_name) VALUES ($1, $2, $3) RETURNING *",
+    [email, passwordHash, displayName]
   );
-  const result = stmt.run(email, passwordHash, displayName);
 
-  const user = db
-    .prepare("SELECT * FROM users WHERE id = ?")
-    .get(result.lastInsertRowid) as User;
-  return user;
+  return result.rows[0] as User;
 }
 
-export function getUserByEmail(email: string): User | undefined {
+export async function getUserByEmail(email: string): Promise<User | undefined> {
   const db = getDB();
-  return db
-    .prepare("SELECT * FROM users WHERE email = ?")
-    .get(email) as User | undefined;
+  const result = await db.query(
+    "SELECT * FROM users WHERE email = $1",
+    [email]
+  );
+  return result.rows[0] as User | undefined;
 }
 
-export function getUserById(id: number): User | undefined {
+export async function getUserById(id: number): Promise<User | undefined> {
   const db = getDB();
-  return db.prepare("SELECT * FROM users WHERE id = ?").get(id) as
-    | User
-    | undefined;
+  const result = await db.query(
+    "SELECT * FROM users WHERE id = $1",
+    [id]
+  );
+  return result.rows[0] as User | undefined;
 }
 
-export function createSession(
+export async function createSession(
   userId: number,
   expiresAt: string,
   userAgent: string | null = null,
   ip: string | null = null
-): Session {
+): Promise<Session> {
   const db = getDB();
   const sessionId = generateSessionId();
-  db.prepare(
-    "INSERT INTO sessions (id, user_id, user_agent, ip, expires_at) VALUES (?, ?, ?, ?, ?)"
-  ).run(sessionId, userId, userAgent, ip, expiresAt);
+  await db.query(
+    "INSERT INTO sessions (id, user_id, user_agent, ip, expires_at) VALUES ($1, $2, $3, $4, $5)",
+    [sessionId, userId, userAgent, ip, expiresAt]
+  );
   return { id: sessionId, user_id: userId, user_agent: userAgent, ip: ip, expires_at: expiresAt };
 }
 
-export function getSession(sessionId: string): Session | undefined {
+export async function getSession(sessionId: string): Promise<Session | undefined> {
   const db = getDB();
-  const session = db
-    .prepare("SELECT * FROM sessions WHERE id = ?")
-    .get(sessionId) as Session | undefined;
+  const result = await db.query(
+    "SELECT * FROM sessions WHERE id = $1",
+    [sessionId]
+  );
+
+  const session = result.rows[0] as Session | undefined;
 
   if (!session) return undefined;
 
   // Check if session has expired
   if (new Date(session.expires_at) < new Date()) {
-    db.prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
+    await db.query("DELETE FROM sessions WHERE id = $1", [sessionId]);
     return undefined;
   }
 
   return session;
 }
 
-export function deleteSession(sessionId: string): void {
+export async function deleteSession(sessionId: string): Promise<void> {
   const db = getDB();
-  db.prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
+  await db.query("DELETE FROM sessions WHERE id = $1", [sessionId]);
 }
 
 /**
  * Get user ID from a valid session ID.
  * Returns null if session is invalid or expired.
  */
-export function getUserIdFromSession(sessionId: string): number | null {
-  const session = getSession(sessionId);
+export async function getUserIdFromSession(sessionId: string): Promise<number | null> {
+  const session = await getSession(sessionId);
   return session ? session.user_id : null;
 }

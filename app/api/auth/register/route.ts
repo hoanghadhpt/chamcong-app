@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = getUserByEmail(email);
+    const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return NextResponse.json(
         { error: "Email already registered" },
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await hashPassword(password);
-    const user = createUser(email, passwordHash, displayName || email);
+    const user = await createUser(email, passwordHash, displayName || email);
 
     return NextResponse.json(
       {

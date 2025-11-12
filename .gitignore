@@ -29,9 +29,7 @@ yarn-error.log*
 .env.production.local
 
 # Database
-data.db
-data.db-wal
-data.db-shm
+# Using PostgreSQL - no local database files to ignore
 
 # IDE
 .vscode

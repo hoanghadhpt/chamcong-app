@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
 
     let holidays;
     if (from && to) {
-      holidays = getHolidaysInDateRange(userId, from, to);
+      holidays = await getHolidaysInDateRange(userId, from, to);
     } else {
-      holidays = getHolidaysByManagerId(userId);
+      holidays = await getHolidaysByManagerId(userId);
     }
 
     return NextResponse.json(holidays);
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const holiday = createHoliday(userId, date, name);
+    const holiday = await createHoliday(userId, date, name);
     return NextResponse.json(holiday, { status: 201 });
   } catch (error) {
     console.error("Error creating holiday:", error);
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const holiday = updateHoliday(userId, date, name);
+    const holiday = await updateHoliday(userId, date, name);
     return NextResponse.json(holiday);
   } catch (error) {
     console.error("Error updating holiday:", error);
@@ -116,7 +116,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = getUserIdFromSession(sessionId);
+    const userId = await getUserIdFromSession(sessionId);
     if (!userId) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
@@ -131,7 +131,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    deleteHoliday(userId, date);
+    await deleteHoliday(userId, date);
     return NextResponse.json({ message: "Holiday deleted successfully" });
   } catch (error) {
     console.error("Error deleting holiday:", error);

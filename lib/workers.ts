@@ -11,37 +11,41 @@ export interface Worker {
   active: number;
 }
 
-export function getWorkersByManagerId(managerId: number): Worker[] {
+export async function getWorkersByManagerId(managerId: number): Promise<Worker[]> {
   const db = getDB();
-  return db
-    .prepare("SELECT * FROM workers WHERE manager_id = ? ORDER BY code ASC")
-    .all(managerId) as Worker[];
+  const result = await db.query(
+    "SELECT * FROM workers WHERE manager_id = $1 ORDER BY code ASC",
+    [managerId]
+  );
+  return result.rows as Worker[];
 }
 
-export function getWorkerById(workerId: number): Worker | undefined {
+export async function getWorkerById(workerId: number): Promise<Worker | undefined> {
   const db = getDB();
-  return db.prepare("SELECT * FROM workers WHERE id = ?").get(workerId) as
-    | Worker
-    | undefined;
+  const result = await db.query(
+    "SELECT * FROM workers WHERE id = $1",
+    [workerId]
+  );
+  return result.rows[0] as Worker | undefined;
 }
 
-export function createWorker(
+export async function createWorker(
   managerId: number,
   code: string,
   name: string,
   phone: string | null,
   team: string | null
-): Worker {
+): Promise<Worker> {
   const db = getDB();
-  const stmt = db.prepare(
-    "INSERT INTO workers (manager_id, code, name, phone, team, active) VALUES (?, ?, ?, ?, ?, 1)"
+  const result = await db.query(
+    "INSERT INTO workers (manager_id, code, name, phone, team, active) VALUES ($1, $2, $3, $4, $5, 1) RETURNING *",
+    [managerId, code, name, phone, team]
   );
-  const result = stmt.run(managerId, code, name, phone, team);
 
-  return getWorkerById(result.lastInsertRowid as number)!;
+  return result.rows[0] as Worker;
 }
 
-export function updateWorker(
+export async function updateWorker(
   workerId: number,
   managerId: number,
   code: string,
@@ -49,24 +53,26 @@ export function updateWorker(
   phone: string | null,
   team: string | null,
   active: number
-): Worker {
+): Promise<Worker> {
   const db = getDB();
-  db.prepare(
-    "UPDATE workers SET code = ?, name = ?, phone = ?, team = ?, active = ? WHERE id = ? AND manager_id = ?"
-  ).run(code, name, phone, team, active, workerId, managerId);
+  await db.query(
+    "UPDATE workers SET code = $1, name = $2, phone = $3, team = $4, active = $5 WHERE id = $6 AND manager_id = $7",
+    [code, name, phone, team, active, workerId, managerId]
+  );
 
-  return getWorkerById(workerId)!;
+  const worker = await getWorkerById(workerId);
+  return worker!;
 }
 
-export function deleteWorker(workerId: number, managerId: number): void {
+export async function deleteWorker(workerId: number, managerId: number): Promise<void> {
   const db = getDB();
-  db.prepare("DELETE FROM workers WHERE id = ? AND manager_id = ?").run(
-    workerId,
-    managerId
+  await db.query(
+    "DELETE FROM workers WHERE id = $1 AND manager_id = $2",
+    [workerId, managerId]
   );
 }
 
-export function importWorkers(
+export async function importWorkers(
   managerId: number,
   workers: Array<{
     code: string;
@@ -75,14 +81,10 @@ export function importWorkers(
     team?: string;
     active?: boolean;
   }>
-): { imported: number; errors: string[] } {
+): Promise<{ imported: number; errors: string[] }> {
   const db = getDB();
   const errors: string[] = [];
   let imported = 0;
-
-  const stmt = db.prepare(
-    "INSERT OR REPLACE INTO workers (manager_id, code, name, phone, team, active) VALUES (?, ?, ?, ?, ?, ?)"
-  );
 
   for (const worker of workers) {
     try {
@@ -91,13 +93,20 @@ export function importWorkers(
         continue;
       }
 
-      stmt.run(
-        managerId,
-        worker.code,
-        worker.name,
-        worker.phone || null,
-        worker.team || null,
-        worker.active !== false ? 1 : 0
+      // PostgreSQL: Use ON CONFLICT to replace existing records
+      await db.query(
+        `INSERT INTO workers (manager_id, code, name, phone, team, active)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (manager_id, code)
+         DO UPDATE SET name = $3, phone = $4, team = $5, active = $6`,
+        [
+          managerId,
+          worker.code,
+          worker.name,
+          worker.phone || null,
+          worker.team || null,
+          worker.active !== false ? 1 : 0
+        ]
       );
       imported++;
     } catch (error) {
