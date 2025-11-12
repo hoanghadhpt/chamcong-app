@@ -8,8 +8,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#1f2937",
-        accent: "#3b82f6",
+        primary: "#CC785C",
+        accent: "#D97757",
+        "accent-light": "#E8956E",
+        beige: {
+          50: "#FBF8F3",
+          100: "#F5EFE6",
+          200: "#E8DCC8",
+        },
+        "warm-dark": "#2B1810",
       },
       animation: {
         slideUp: "slideUp 0.3s ease-out",
