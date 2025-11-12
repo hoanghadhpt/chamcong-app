@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Toast from "@/components/Toast";
 import AttendanceStatusChip from "@/components/AttendanceStatusChip";
 import { vi } from "@/lib/i18n";
@@ -47,7 +47,7 @@ export default function ReportsPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
 
   // Fetch data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [workersRes, attendanceRes] = await Promise.all([
@@ -87,11 +87,11 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     fetchData();
-  }, [fromDate, toDate]);
+  }, [fetchData]);
 
   // Export Excel
   const handleExport = async () => {
@@ -127,9 +127,10 @@ export default function ReportsPage() {
     }
   };
 
-  // Generate matrix data
-  const generateMatrixData = () => {
-    if (!workers.length || !attendanceData.length) return { dates: [], workerRows: [] };
+  // Generate matrix data - memoized for performance
+  const matrixData = useMemo(() => {
+    if (viewType !== "matrix") return null;
+    if (!workers.length) return { dates: [], workerRows: [] };
 
     // Get all dates in range
     const dates: string[] = [];
@@ -167,9 +168,7 @@ export default function ReportsPage() {
     });
 
     return { dates, workerRows };
-  };
-
-  const matrixData = viewType === "matrix" ? generateMatrixData() : null;
+  }, [viewType, workers, attendanceData, fromDate, toDate]);
 
   // Mobile warning
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
