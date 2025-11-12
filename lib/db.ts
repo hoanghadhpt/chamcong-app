@@ -22,11 +22,11 @@ function initializeSchema() {
   // Check if tables exist
   const tables = database
     .prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'sessions', 'workers', 'attendance')"
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users', 'sessions', 'workers', 'shifts', 'settings', 'holidays', 'attendance')"
     )
     .all() as { name: string }[];
 
-  if (tables.length === 4) {
+  if (tables.length === 7) {
     return; // Schema already exists
   }
 
@@ -43,6 +43,8 @@ function initializeSchema() {
     CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      user_agent TEXT,
+      ip TEXT,
       expires_at TEXT NOT NULL
     );
 
@@ -57,6 +59,36 @@ function initializeSchema() {
       UNIQUE(manager_id, code)
     );
 
+    CREATE TABLE IF NOT EXISTS shifts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      break_minutes INTEGER DEFAULT 0,
+      is_overnight INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      manager_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      workday_minutes INTEGER DEFAULT 480,
+      round_step_minutes INTEGER DEFAULT 15,
+      late_grace INTEGER DEFAULT 5,
+      early_grace INTEGER DEFAULT 5,
+      default_shift_id INTEGER REFERENCES shifts(id),
+      locale TEXT DEFAULT 'vi-VN',
+      tz TEXT DEFAULT 'Asia/Ho_Chi_Minh',
+      enable_gps INTEGER DEFAULT 0,
+      enable_selfie INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS holidays (
+      manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      date TEXT NOT NULL,
+      name TEXT NOT NULL,
+      PRIMARY KEY (manager_id, date)
+    );
+
     CREATE TABLE IF NOT EXISTS attendance (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       manager_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -65,16 +97,24 @@ function initializeSchema() {
       status TEXT,
       check_in TEXT,
       check_out TEXT,
+      late_minutes INTEGER,
+      early_minutes INTEGER,
+      ot_1_5 INTEGER DEFAULT 0,
+      ot_2_0 INTEGER DEFAULT 0,
+      ot_3_0 INTEGER DEFAULT 0,
       note TEXT,
+      shift_id INTEGER REFERENCES shifts(id),
       UNIQUE(manager_id, worker_id, work_date)
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
     CREATE INDEX IF NOT EXISTS idx_workers_manager_id ON workers(manager_id);
+    CREATE INDEX IF NOT EXISTS idx_shifts_manager_id ON shifts(manager_id);
     CREATE INDEX IF NOT EXISTS idx_attendance_manager_id ON attendance(manager_id);
     CREATE INDEX IF NOT EXISTS idx_attendance_worker_id ON attendance(worker_id);
     CREATE INDEX IF NOT EXISTS idx_attendance_work_date ON attendance(work_date);
+    CREATE INDEX IF NOT EXISTS idx_holidays_manager_id ON holidays(manager_id);
   `);
 }
 

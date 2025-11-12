@@ -8,7 +8,13 @@ export interface AttendanceRecord {
   status: string | null;
   check_in: string | null;
   check_out: string | null;
+  late_minutes: number | null;
+  early_minutes: number | null;
+  ot_1_5: number;
+  ot_2_0: number;
+  ot_3_0: number;
   note: string | null;
+  shift_id: number | null;
 }
 
 export function getAttendanceByDateRange(
@@ -107,9 +113,15 @@ export function upsertAttendance(
   workerId: number,
   workDate: string,
   status: string,
-  checkIn: string | null,
-  checkOut: string | null,
-  note: string | null
+  checkIn: string | null = null,
+  checkOut: string | null = null,
+  lateMinutes: number | null = null,
+  earlyMinutes: number | null = null,
+  ot_1_5: number = 0,
+  ot_2_0: number = 0,
+  ot_3_0: number = 0,
+  note: string | null = null,
+  shiftId: number | null = null
 ): AttendanceRecord {
   const db = getDB();
 
@@ -122,9 +134,22 @@ export function upsertAttendance(
   if (existing) {
     db.prepare(
       `UPDATE attendance
-       SET status = ?, check_in = ?, check_out = ?, note = ?
+       SET status = ?, check_in = ?, check_out = ?, late_minutes = ?, early_minutes = ?,
+           ot_1_5 = ?, ot_2_0 = ?, ot_3_0 = ?, note = ?, shift_id = ?
        WHERE id = ?`
-    ).run(status, checkIn, checkOut, note, existing.id);
+    ).run(
+      status,
+      checkIn,
+      checkOut,
+      lateMinutes,
+      earlyMinutes,
+      ot_1_5,
+      ot_2_0,
+      ot_3_0,
+      note,
+      shiftId,
+      existing.id
+    );
 
     return db
       .prepare("SELECT * FROM attendance WHERE id = ?")
@@ -132,10 +157,24 @@ export function upsertAttendance(
   } else {
     const result = db
       .prepare(
-        `INSERT INTO attendance (manager_id, worker_id, work_date, status, check_in, check_out, note)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO attendance (manager_id, worker_id, work_date, status, check_in, check_out, late_minutes, early_minutes, ot_1_5, ot_2_0, ot_3_0, note, shift_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(managerId, workerId, workDate, status, checkIn, checkOut, note);
+      .run(
+        managerId,
+        workerId,
+        workDate,
+        status,
+        checkIn,
+        checkOut,
+        lateMinutes,
+        earlyMinutes,
+        ot_1_5,
+        ot_2_0,
+        ot_3_0,
+        note,
+        shiftId
+      );
 
     return db
       .prepare("SELECT * FROM attendance WHERE id = ?")

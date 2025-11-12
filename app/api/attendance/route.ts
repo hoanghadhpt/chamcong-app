@@ -60,8 +60,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Session expired" }, { status: 401 });
     }
 
-    const { workerId, workDate, status, checkIn, checkOut, note } =
-      await request.json();
+    const {
+      workerId,
+      workDate,
+      status,
+      checkIn,
+      checkOut,
+      lateMinutes,
+      earlyMinutes,
+      ot_1_5 = 0,
+      ot_2_0 = 0,
+      ot_3_0 = 0,
+      note,
+      shiftId,
+    } = await request.json();
 
     if (!workerId || !workDate || !status) {
       return NextResponse.json(
@@ -77,7 +89,13 @@ export async function POST(request: NextRequest) {
       status,
       checkIn || null,
       checkOut || null,
-      note || null
+      lateMinutes || null,
+      earlyMinutes || null,
+      ot_1_5,
+      ot_2_0,
+      ot_3_0,
+      note || null,
+      shiftId || null
     );
 
     return NextResponse.json(record, { status: 201 });

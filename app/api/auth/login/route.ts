@@ -35,7 +35,12 @@ export async function POST(request: NextRequest) {
     }
 
     const expiresAt = new Date(Date.now() + SESSION_DURATION).toISOString();
-    const session = createSession(user.id, expiresAt);
+    const userAgent = request.headers.get("user-agent") || undefined;
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ||
+               request.headers.get("x-real-ip") ||
+               undefined;
+
+    const session = createSession(user.id, expiresAt, userAgent, ip);
 
     const response = NextResponse.json(
       {
@@ -51,7 +56,7 @@ export async function POST(request: NextRequest) {
       value: session.id,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: SESSION_DURATION / 1000, // convert to seconds
       path: "/",
     });

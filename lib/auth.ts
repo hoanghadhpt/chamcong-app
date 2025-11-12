@@ -28,6 +28,8 @@ export interface User {
 export interface Session {
   id: string;
   user_id: number;
+  user_agent: string | null;
+  ip: string | null;
   expires_at: string;
 }
 
@@ -64,16 +66,16 @@ export function getUserById(id: number): User | undefined {
 
 export function createSession(
   userId: number,
-  expiresAt: string
+  expiresAt: string,
+  userAgent: string | null = null,
+  ip: string | null = null
 ): Session {
   const db = getDB();
   const sessionId = generateSessionId();
-  db.prepare("INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)").run(
-    sessionId,
-    userId,
-    expiresAt
-  );
-  return { id: sessionId, user_id: userId, expires_at: expiresAt };
+  db.prepare(
+    "INSERT INTO sessions (id, user_id, user_agent, ip, expires_at) VALUES (?, ?, ?, ?, ?)"
+  ).run(sessionId, userId, userAgent, ip, expiresAt);
+  return { id: sessionId, user_id: userId, user_agent: userAgent, ip: ip, expires_at: expiresAt };
 }
 
 export function getSession(sessionId: string): Session | undefined {
