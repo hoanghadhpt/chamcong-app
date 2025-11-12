@@ -55,8 +55,10 @@ export default function ReportsPage() {
         fetch(`/api/attendance/range?fromDate=${fromDate}&toDate=${toDate}`),
       ]);
 
+      // Parse workers data once
+      let workersData: Worker[] = [];
       if (workersRes.ok) {
-        const workersData = await workersRes.json();
+        workersData = await workersRes.json();
         setWorkers(workersData.filter((w: Worker) => w.active === 1));
       }
 
@@ -65,10 +67,7 @@ export default function ReportsPage() {
 
         // Merge with worker data
         const workersMap = new Map<number, Worker>();
-        if (workersRes.ok) {
-          const workersData = await workersRes.json();
-          workersData.forEach((w: Worker) => workersMap.set(w.id, w));
-        }
+        workersData.forEach((w: Worker) => workersMap.set(w.id, w));
 
         const merged: AttendanceWithWorker[] = attendanceRecords.map((record) => {
           const worker = workersMap.get(record.worker_id);
