@@ -132,6 +132,145 @@ export function parseCSV(csvContent: string): Array<Record<string, string>> {
   return records;
 }
 
+/**
+ * Auto-detect column mapping from CSV headers
+ * Supports Vietnamese and English column names
+ */
+export interface ColumnMapping {
+  code: string | null;
+  name: string | null;
+  phone: string | null;
+  team: string | null;
+  active: string | null;
+}
+
+export function detectColumnMapping(headers: string[]): ColumnMapping {
+  const lowerHeaders = headers.map((h) => h.toLowerCase().trim());
+
+  // Define Vietnamese and English variations for each field
+  const codePatterns = [
+    "mã nv",
+    "mã nhân viên",
+    "code",
+    "mã",
+    "employee code",
+    "id",
+    "stt",
+  ];
+  const namePatterns = [
+    "họ tên",
+    "tên",
+    "name",
+    "họ và tên",
+    "full name",
+    "nhân viên",
+  ];
+  const phonePatterns = [
+    "điện thoại",
+    "sdt",
+    "số điện thoại",
+    "phone",
+    "mobile",
+    "số điện thoại liên hệ",
+  ];
+  const teamPatterns = [
+    "bộ phận",
+    "tổ",
+    "phòng ban",
+    "department",
+    "team",
+    "phân xưởng",
+    "chức danh",
+  ];
+  const activePatterns = [
+    "trạng thái",
+    "hoạt động",
+    "active",
+    "status",
+    "enabled",
+  ];
+
+  const mapping: ColumnMapping = {
+    code: findMatchingHeader(lowerHeaders, codePatterns),
+    name: findMatchingHeader(lowerHeaders, namePatterns),
+    phone: findMatchingHeader(lowerHeaders, phonePatterns),
+    team: findMatchingHeader(lowerHeaders, teamPatterns),
+    active: findMatchingHeader(lowerHeaders, activePatterns),
+  };
+
+  return mapping;
+}
+
+/**
+ * Find the best matching header from a list of patterns
+ */
+function findMatchingHeader(
+  headers: string[],
+  patterns: string[]
+): string | null {
+  for (const pattern of patterns) {
+    const match = headers.find(
+      (h) => h === pattern || h.includes(pattern) || pattern.includes(h)
+    );
+    if (match) return match;
+  }
+  return null;
+}
+
+/**
+ * Transform raw CSV records using column mapping
+ */
+export function transformRecordsByMapping(
+  records: Array<Record<string, string>>,
+  mapping: ColumnMapping
+): Array<{
+  code: string;
+  name: string;
+  phone?: string;
+  team?: string;
+  active?: boolean;
+}> {
+  return records
+    .map((record) => {
+      const transformed = {
+        code: mapping.code ? record[mapping.code]?.trim() || "" : "",
+        name: mapping.name ? record[mapping.name]?.trim() || "" : "",
+        phone: mapping.phone ? record[mapping.phone]?.trim() || undefined : undefined,
+        team: mapping.team ? record[mapping.team]?.trim() || undefined : undefined,
+        active: mapping.active
+          ? isActive(record[mapping.active])
+          : undefined,
+      };
+
+      // Remove empty optional fields
+      if (!transformed.phone) delete transformed.phone;
+      if (!transformed.team) delete transformed.team;
+      if (transformed.active === undefined) delete transformed.active;
+
+      return transformed;
+    })
+    .filter((r) => r.code && r.name); // Filter out records without code or name
+}
+
+/**
+ * Parse active/inactive status from various formats
+ */
+function isActive(value: string): boolean {
+  if (!value) return true; // Default to active if not specified
+  const lowerValue = value.toLowerCase().trim();
+  const activeValues = [
+    "true",
+    "yes",
+    "có",
+    "1",
+    "active",
+    "hoạt động",
+    "✓",
+    "x",
+  ];
+  return activeValues.includes(lowerValue);
+}
+
 export function workersToCSV(workers: Worker[]): string {
   const headers = ["code", "name", "phone", "team", "active"];
   const rows = [

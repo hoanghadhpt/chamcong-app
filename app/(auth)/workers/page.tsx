@@ -13,6 +13,21 @@ interface Worker {
   active: number;
 }
 
+interface ColumnMapping {
+  code: string | null;
+  name: string | null;
+  phone: string | null;
+  team: string | null;
+  active: string | null;
+}
+
+interface ImportPreview {
+  headers: string[];
+  mapping: ColumnMapping;
+  file: File;
+  totalRows: number;
+}
+
 export default function WorkersPage() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +35,7 @@ export default function WorkersPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -140,9 +156,48 @@ export default function WorkersPage() {
 
     const formDataObj = new FormData();
     formDataObj.append("file", file);
+    formDataObj.append("action", "detect");
 
     setSaving(true);
     try {
+      const response = await fetch("/api/workers/import", {
+        method: "POST",
+        body: formDataObj,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setImportPreview({
+          headers: result.headers,
+          mapping: result.mapping,
+          file: file,
+          totalRows: result.totalRows,
+        });
+      } else {
+        const data = await response.json();
+        setToast(data.error || vi.workers.importError);
+      }
+    } catch (error) {
+      console.error("Error detecting columns:", error);
+      setToast(vi.common.importError);
+    } finally {
+      setSaving(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importPreview) return;
+
+    setSaving(true);
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append("file", importPreview.file);
+      formDataObj.append("action", "import");
+      formDataObj.append("mapping", JSON.stringify(importPreview.mapping));
+
       const response = await fetch("/api/workers/import", {
         method: "POST",
         body: formDataObj,
@@ -154,18 +209,17 @@ export default function WorkersPage() {
           ? vi.workers.importPartial.replace("{count}", result.imported.toString()).replace("{errors}", result.errors.length.toString())
           : vi.workers.importSuccess.replace("{count}", result.imported.toString());
         setToast(message);
+        setImportPreview(null);
         fetchWorkers();
       } else {
-        setToast(vi.workers.importError);
+        const data = await response.json();
+        setToast(data.error || vi.workers.importError);
       }
     } catch (error) {
       console.error("Error importing:", error);
       setToast(vi.common.importError);
     } finally {
       setSaving(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     }
   };
 
@@ -332,6 +386,173 @@ export default function WorkersPage() {
           ))
         )}
       </div>
+
+      {/* Import Preview Modal */}
+      {importPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-primary mb-4">
+                Xác nhận ánh xạ cột
+              </h3>
+
+              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                <p className="text-sm text-blue-800">
+                  File có {importPreview.totalRows} hàng. Hệ thống đã tự động phát hiện ánh xạ cột sau:
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Mã NV (Code):
+                  </label>
+                  <select
+                    value={importPreview.mapping.code || ""}
+                    onChange={(e) =>
+                      setImportPreview({
+                        ...importPreview,
+                        mapping: {
+                          ...importPreview.mapping,
+                          code: e.target.value || null,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    {importPreview.headers.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Họ tên (Name):
+                  </label>
+                  <select
+                    value={importPreview.mapping.name || ""}
+                    onChange={(e) =>
+                      setImportPreview({
+                        ...importPreview,
+                        mapping: {
+                          ...importPreview.mapping,
+                          name: e.target.value || null,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    {importPreview.headers.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Điện thoại (Phone):
+                  </label>
+                  <select
+                    value={importPreview.mapping.phone || ""}
+                    onChange={(e) =>
+                      setImportPreview({
+                        ...importPreview,
+                        mapping: {
+                          ...importPreview.mapping,
+                          phone: e.target.value || null,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    {importPreview.headers.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Bộ phận (Team):
+                  </label>
+                  <select
+                    value={importPreview.mapping.team || ""}
+                    onChange={(e) =>
+                      setImportPreview({
+                        ...importPreview,
+                        mapping: {
+                          ...importPreview.mapping,
+                          team: e.target.value || null,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    {importPreview.headers.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Trạng thái (Active):
+                  </label>
+                  <select
+                    value={importPreview.mapping.active || ""}
+                    onChange={(e) =>
+                      setImportPreview({
+                        ...importPreview,
+                        mapping: {
+                          ...importPreview.mapping,
+                          active: e.target.value || null,
+                        },
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  >
+                    <option value="">-- Không chọn --</option>
+                    {importPreview.headers.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setImportPreview(null)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded font-semibold hover:bg-gray-50 transition"
+                >
+                  {vi.common.cancel}
+                </button>
+                <button
+                  onClick={handleConfirmImport}
+                  disabled={saving || !importPreview.mapping.code || !importPreview.mapping.name}
+                  className="flex-1 px-4 py-2 bg-accent hover:bg-blue-600 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? "Đang nhập..." : "Xác nhận & Nhập"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && <Toast message={toast} />}
     </div>
