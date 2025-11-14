@@ -430,7 +430,70 @@ export default function ReportsPage() {
                 </div>
               )}
               {viewType === "matrix" && matrixData && (
-                <div className="relative">
+                <>
+                  {/* Legend / Chú thích */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h3 className="text-sm font-bold text-gray-700 mb-3">📖 Chú thích ký hiệu:</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-green-100 text-green-800 font-bold rounded flex items-center justify-center text-sm">
+                          P
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Có mặt</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Present)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-red-100 text-red-800 font-bold rounded flex items-center justify-center text-sm">
+                          V
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Vắng mặt</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Absent)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-800 font-bold rounded flex items-center justify-center text-sm">
+                          L
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Nghỉ phép</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Leave)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-100 text-purple-800 font-bold rounded flex items-center justify-center text-sm">
+                          S
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Ốm đau</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Sick)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-yellow-100 text-yellow-800 font-bold rounded flex items-center justify-center text-xs">
+                          OT
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Tăng ca</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Overtime)</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <p className="text-xs text-gray-600">
+                        💡 <span className="font-semibold">Cột tổng kết:</span> P = Tổng ngày có mặt | V = Tổng ngày vắng | L = Tổng ngày nghỉ phép | S = Tổng ngày ốm | OT = Tổng ngày tăng ca
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative">
                   {/* Scroll Indicator */}
                   <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-200 to-transparent pointer-events-none z-20 rounded-r-lg"></div>
 
@@ -564,6 +627,7 @@ export default function ReportsPage() {
                   </table>
                 </div>
                 </div>
+                </>
               )}
             </>
           )}

@@ -315,6 +315,64 @@ export async function generateMatrixExcel(
     { state: "frozen", xSplit: 3, ySplit: 2, activeCell: "D3" } as any,
   ];
 
+  // Add legend/explanation rows at the bottom
+  const legendStartRow = rowNum + 2;
+
+  // Legend title
+  const legendTitleCell = worksheet.getCell(`A${legendStartRow}`);
+  legendTitleCell.value = "CHÚ THÍCH KÝ HIỆU:";
+  legendTitleCell.font = { bold: true, size: 12 };
+  legendTitleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFDBEAFE" }, // Light purple
+  };
+  worksheet.mergeCells(`A${legendStartRow}:${getLetter(columns.length)}${legendStartRow}`);
+
+  // Legend items
+  const legends = [
+    { code: "P", meaning: "Có mặt (Present)" },
+    { code: "V", meaning: "Vắng mặt (Absent)" },
+    { code: "LP", meaning: "Phép có lương (Leave Paid)" },
+    { code: "LN", meaning: "Phép không lương (Leave Unpaid)" },
+    { code: "S", meaning: "Ốm đau (Sick)" },
+    { code: "OT", meaning: "Tăng ca (Overtime)" },
+    { code: "/2", meaning: "Nửa ngày (Half day) - Ví dụ: P/2 = Có mặt nửa ngày" },
+  ];
+
+  legends.forEach((legend, index) => {
+    const row = worksheet.getRow(legendStartRow + 1 + index);
+    const codeCell = row.getCell(1);
+    const meaningCell = row.getCell(2);
+
+    codeCell.value = legend.code;
+    codeCell.font = { bold: true };
+    codeCell.alignment = { horizontal: "center" as any, vertical: "middle" as any };
+    codeCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFF3F4F6" }, // Light gray
+    };
+    codeCell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    meaningCell.value = legend.meaning;
+    meaningCell.alignment = { horizontal: "left" as any, vertical: "middle" as any };
+    meaningCell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+    };
+
+    // Merge cells for meaning (from column 2 to last column)
+    worksheet.mergeCells(`B${legendStartRow + 1 + index}:${getLetter(columns.length)}${legendStartRow + 1 + index}`);
+  });
+
   return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
 }
 
