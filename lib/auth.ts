@@ -22,6 +22,9 @@ export interface User {
   email: string;
   password_hash: string;
   display_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  bio: string | null;
   created_at: string;
 }
 
