@@ -29,6 +29,7 @@ export default function Navigation() {
     { path: "/workers", label: "Nhân viên", icon: "👥" },
     { path: "/reports", label: "Báo cáo", icon: "📊" },
     { path: "/export", label: "Xuất BC", icon: "💾" },
+    { path: "/profile", label: "Profile", icon: "👤" },
   ];
 
   return (

@@ -94,6 +94,34 @@ async function initializeSchema() {
     }
   }
 
+  // Check if users table exists and add profile columns if needed
+  const usersTableResult = await database.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'users'`
+  );
+
+  if (usersTableResult.rows.length > 0) {
+    const usersColumnsResult = await database.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'users'`
+    );
+
+    const columnNames = usersColumnsResult.rows.map((row) => row.column_name);
+    const needsPhone = !columnNames.includes("phone");
+    const needsAvatarUrl = !columnNames.includes("avatar_url");
+    const needsBio = !columnNames.includes("bio");
+
+    if (needsPhone || needsAvatarUrl || needsBio) {
+      console.log("Migrating users table: adding profile columns...");
+      const alterStmts = [];
+      if (needsPhone) alterStmts.push("ALTER TABLE users ADD COLUMN phone TEXT;");
+      if (needsAvatarUrl) alterStmts.push("ALTER TABLE users ADD COLUMN avatar_url TEXT;");
+      if (needsBio) alterStmts.push("ALTER TABLE users ADD COLUMN bio TEXT;");
+
+      await database.query(alterStmts.join("\n"));
+    }
+  }
+
   // Check if all tables exist
   const tablesResult = await database.query(
     `SELECT table_name FROM information_schema.tables
@@ -111,6 +139,9 @@ async function initializeSchema() {
       email VARCHAR(255) UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       display_name TEXT,
+      phone TEXT,
+      avatar_url TEXT,
+      bio TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
