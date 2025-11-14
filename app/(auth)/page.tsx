@@ -61,9 +61,10 @@ export default function HomePage() {
   const [batchMarking, setBatchMarking] = useState<string | null>(null);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   // Toggle team expansion (optimized with useCallback)

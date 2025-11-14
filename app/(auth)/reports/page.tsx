@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Toast from "@/components/Toast";
 import AttendanceStatusChip from "@/components/AttendanceStatusChip";
-import { vi, extractTimeFromTimestamp } from "@/lib/i18n";
+import { vi, extractTimeFromTimestamp, formatDateLocal } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -40,8 +40,8 @@ function getMonthBounds(year: number, month: number) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   return {
-    firstDay: firstDay.toISOString().split("T")[0],
-    lastDay: lastDay.toISOString().split("T")[0],
+    firstDay: formatDateLocal(firstDay),
+    lastDay: formatDateLocal(lastDay),
   };
 }
 
@@ -185,7 +185,7 @@ export default function ReportsPage() {
     const start = new Date(fromDate);
     const end = new Date(toDate);
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(d.toISOString().split("T")[0]);
+      dates.push(formatDateLocal(d));
     }
 
     // Create matrix
