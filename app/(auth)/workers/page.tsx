@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import Toast from "@/components/Toast";
 import WorkersTable from "@/components/WorkersTable";
+import WorkerEditModal from "@/components/WorkerEditModal";
 import { vi } from "@/lib/i18n";
 
 interface Worker {
@@ -34,19 +35,12 @@ export default function WorkersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [formData, setFormData] = useState({
-    code: "",
-    name: "",
-    phone: "",
-    team: "",
-  });
 
   useEffect(() => {
     fetchWorkers();
@@ -68,52 +62,49 @@ export default function WorkersPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveWorker = async (workerData: Partial<Worker> & { id?: number }) => {
     setSaving(true);
 
     try {
-      if (editingId) {
+      if (workerData.id) {
+        // Update existing worker
         const response = await fetch("/api/workers", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: editingId,
-            ...formData,
-            active: 1,
-          }),
+          body: JSON.stringify(workerData),
         });
 
         if (response.ok) {
           const updated = await response.json();
           setWorkers(
-            workers.map((w) => (w.id === editingId ? updated : w))
+            workers.map((w) => (w.id === workerData.id ? updated : w))
           );
           setToast(vi.workers.updateSuccess);
+          setModalOpen(false);
+          setEditingWorker(null);
         } else {
           const data = await response.json();
           setToast(data.error || vi.workers.updateError);
         }
       } else {
+        // Create new worker
         const response = await fetch("/api/workers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(workerData),
         });
 
         if (response.ok) {
           const newWorker = await response.json();
           setWorkers([...workers, newWorker]);
           setToast(vi.workers.addSuccess);
+          setModalOpen(false);
+          setEditingWorker(null);
         } else {
           const data = await response.json();
           setToast(data.error || vi.workers.addError);
         }
       }
-
-      setFormData({ code: "", name: "", phone: "", team: "" });
-      setShowForm(false);
-      setEditingId(null);
     } catch (error) {
       console.error("Error saving worker:", error);
       setToast(vi.common.saveError);
@@ -123,14 +114,18 @@ export default function WorkersPage() {
   };
 
   const handleEdit = (worker: Worker) => {
-    setFormData({
-      code: worker.code,
-      name: worker.name,
-      phone: worker.phone || "",
-      team: worker.team || "",
-    });
-    setEditingId(worker.id);
-    setShowForm(true);
+    setEditingWorker(worker);
+    setModalOpen(true);
+  };
+
+  const handleAddNew = () => {
+    setEditingWorker(null);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingWorker(null);
   };
 
   const handleDelete = async (id: number) => {
@@ -263,14 +258,10 @@ export default function WorkersPage() {
         {/* Action buttons - responsive grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-4 lg:mb-6">
           <button
-            onClick={() => {
-              setShowForm(!showForm);
-              setEditingId(null);
-              setFormData({ code: "", name: "", phone: "", team: "" });
-            }}
+            onClick={handleAddNew}
             className="bg-accent hover:bg-blue-600 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
           >
-            {showForm && !editingId ? vi.common.cancel : vi.workers.add}
+            {vi.workers.add}
           </button>
 
           <button
@@ -360,58 +351,6 @@ export default function WorkersPage() {
           </div>
         </div>
 
-        {showForm && (
-          <form onSubmit={handleSubmit} className="bg-gray-50 p-4 lg:p-6 rounded-xl mb-4 lg:mb-6 space-y-3 lg:space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4">
-              <input
-                type="text"
-                placeholder={vi.workers.code}
-                value={formData.code}
-                onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value })
-                }
-                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
-                required
-              />
-              <input
-                type="text"
-                placeholder={vi.workers.name}
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
-                required
-              />
-              <input
-                type="tel"
-                placeholder={vi.workers.phone}
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
-              />
-              <input
-                type="text"
-                placeholder={vi.workers.team}
-                value={formData.team}
-                onChange={(e) =>
-                  setFormData({ ...formData, team: e.target.value })
-                }
-                className="px-3 lg:px-4 py-2 lg:py-3 border border-gray-300 rounded-lg text-base lg:text-lg"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-accent hover:bg-blue-600 text-white font-bold py-2 lg:py-3 rounded-lg text-base lg:text-lg transition disabled:opacity-50"
-            >
-              {saving ? vi.common.saving + "..." : editingId ? vi.workers.update : vi.workers.add}
-            </button>
-          </form>
-        )}
       </div>
 
       {/* Table View (Desktop) */}
@@ -658,6 +597,15 @@ export default function WorkersPage() {
           </div>
         </div>
       )}
+
+      {/* Worker Edit/Add Modal */}
+      <WorkerEditModal
+        isOpen={modalOpen}
+        worker={editingWorker}
+        onClose={handleCloseModal}
+        onSave={handleSaveWorker}
+        saving={saving}
+      />
 
       {toast && <Toast message={toast} />}
     </div>
