@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import AttendanceStatusChip from "./AttendanceStatusChip";
 
 interface Worker {
@@ -171,8 +171,8 @@ export default function AttendanceTable({
                   current?.status === "absent";
 
                 return (
-                  <>
-                    <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
+                  <React.Fragment key={worker.id}>
+                    <tr className="hover:bg-gray-50 transition-colors">
                       <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
                         {index + 1}
                       </td>
@@ -368,7 +368,7 @@ export default function AttendanceTable({
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })
             )}
