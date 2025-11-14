@@ -196,6 +196,23 @@ export default function HomePage() {
     setChanges(newChanges);
   };
 
+  const handleTimeChange = (workerId: number, field: 'check_in' | 'check_out', time: string) => {
+    const existing = attendance.get(workerId) || changes.get(workerId);
+    const updated: AttendanceRecord = {
+      id: existing?.id || 0,
+      worker_id: workerId,
+      work_date: selectedDate,
+      status: existing?.status || "present",
+      check_in: field === 'check_in' ? time : (existing?.check_in || null),
+      check_out: field === 'check_out' ? time : (existing?.check_out || null),
+      shift_amount: existing?.shift_amount || 1.0,
+    };
+
+    const newChanges = new Map(changes);
+    newChanges.set(workerId, updated);
+    setChanges(newChanges);
+  };
+
   const handleBatchMark = async (teamName: string, status: string) => {
     setBatchMarking(teamName);
 
@@ -400,6 +417,7 @@ export default function HomePage() {
               changes={changes}
               onStatusChange={handleStatusChange}
               onCheckOut={handleCheckOut}
+              onTimeChange={handleTimeChange}
               searchQuery={searchQuery}
             />
           </div>
@@ -429,6 +447,7 @@ export default function HomePage() {
                   onToggleExpand={() => toggleTeamExpanded(team)}
                   onStatusChange={handleStatusChange}
                   onCheckOut={handleCheckOut}
+                  onTimeChange={handleTimeChange}
                   onBatchMark={handleBatchMark}
                   batchMarking={batchMarking}
                 />

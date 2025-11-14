@@ -27,6 +27,7 @@ interface AttendanceTableProps {
   changes: Map<number, AttendanceRecord>;
   onStatusChange: (workerId: number, status: string, isCheckIn: boolean, shiftAmount: number) => void;
   onCheckOut: (workerId: number) => void;
+  onTimeChange?: (workerId: number, field: 'check_in' | 'check_out', time: string) => void;
   searchQuery?: string;
 }
 
@@ -45,11 +46,13 @@ export default function AttendanceTable({
   changes,
   onStatusChange,
   onCheckOut,
+  onTimeChange,
   searchQuery = "",
 }: AttendanceTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [filterTeam, setFilterTeam] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [editingTime, setEditingTime] = useState<{ workerId: number; field: 'check_in' | 'check_out' } | null>(null);
 
   // Get unique teams
   const teams = Array.from(new Set(workers.map((w) => w.team || "Không có bộ phận")));
@@ -298,25 +301,66 @@ export default function AttendanceTable({
                               </div>
                             )}
 
-                            {/* Check-in/out buttons (for present status) */}
+                            {/* Check-in/out editable time (for present status) */}
                             {current?.status === "present" && (
                               <div>
                                 <p className="text-xs font-semibold text-gray-700 mb-2">Chấm công:</p>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() =>
-                                      onStatusChange(worker.id, "present", true, current.shift_amount || 1.0)
-                                    }
-                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-bold transition-all shadow-md"
-                                  >
-                                    ⏰ Vào: {current.check_in || "---"}
-                                  </button>
-                                  <button
-                                    onClick={() => onCheckOut(worker.id)}
-                                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg font-bold transition-all shadow-md"
-                                  >
-                                    🏁 Ra: {current.check_out || "---"}
-                                  </button>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {/* Check In */}
+                                  <div className="space-y-2">
+                                    <label className="text-xs text-gray-600 font-medium flex items-center gap-1">
+                                      ⏰ Giờ vào
+                                    </label>
+                                    <div className="flex gap-2">
+                                      <input
+                                        type="time"
+                                        value={current.check_in || ""}
+                                        onChange={(e) => {
+                                          if (onTimeChange) {
+                                            onTimeChange(worker.id, 'check_in', e.target.value);
+                                          }
+                                        }}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        placeholder="--:--"
+                                      />
+                                      <button
+                                        onClick={() =>
+                                          onStatusChange(worker.id, "present", true, current.shift_amount || 1.0)
+                                        }
+                                        className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold text-xs transition-all shadow-sm"
+                                        title="Chấm vào hiện tại"
+                                      >
+                                        Hiện tại
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Check Out */}
+                                  <div className="space-y-2">
+                                    <label className="text-xs text-gray-600 font-medium flex items-center gap-1">
+                                      🏁 Giờ ra
+                                    </label>
+                                    <div className="flex gap-2">
+                                      <input
+                                        type="time"
+                                        value={current.check_out || ""}
+                                        onChange={(e) => {
+                                          if (onTimeChange) {
+                                            onTimeChange(worker.id, 'check_out', e.target.value);
+                                          }
+                                        }}
+                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        placeholder="--:--"
+                                      />
+                                      <button
+                                        onClick={() => onCheckOut(worker.id)}
+                                        className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-xs transition-all shadow-sm"
+                                        title="Chấm ra hiện tại"
+                                      >
+                                        Hiện tại
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             )}

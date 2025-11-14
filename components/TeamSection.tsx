@@ -30,6 +30,7 @@ interface TeamSectionProps {
   onToggleExpand: () => void;
   onStatusChange: (workerId: number, status: string, isCheckIn: boolean, shiftAmount: number) => void;
   onCheckOut: (workerId: number) => void;
+  onTimeChange?: (workerId: number, field: 'check_in' | 'check_out', time: string) => void;
   onBatchMark: (teamName: string, status: string) => void;
   batchMarking: string | null;
   className?: string;
@@ -50,6 +51,7 @@ export default function TeamSection({
   onToggleExpand,
   onStatusChange,
   onCheckOut,
+  onTimeChange,
   onBatchMark,
   batchMarking,
   className = "",
@@ -114,6 +116,7 @@ export default function TeamSection({
                 attendance={current}
                 onStatusChange={onStatusChange}
                 onCheckOut={onCheckOut}
+                onTimeChange={onTimeChange}
               />
             );
           })}
