@@ -170,11 +170,11 @@ export async function generateMatrixExcel(
   }
 
   // Summary columns
-  columns.push({ header: "Có mặt", key: "present", width: 6 });
-  columns.push({ header: "Vắng", key: "absent", width: 6 });
-  columns.push({ header: "Phép", key: "leave", width: 6 });
+  columns.push({ header: "Có mặt", key: "present", width: 8 });
+  columns.push({ header: "Vắng", key: "absent", width: 8 });
+  columns.push({ header: "Nghỉ phép", key: "leave", width: 10 });
   columns.push({ header: "Ốm", key: "sick", width: 6 });
-  columns.push({ header: "OT", key: "ot_hours", width: 6 });
+  columns.push({ header: "Tăng ca", key: "ot_hours", width: 8 });
 
   // Set column widths only (without headers)
   worksheet.columns = columns.map(col => ({

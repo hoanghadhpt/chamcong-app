@@ -488,7 +488,10 @@ export default function ReportsPage() {
                     </div>
                     <div className="mt-3 pt-3 border-t border-blue-200">
                       <p className="text-xs text-gray-600">
-                        💡 <span className="font-semibold">Cột tổng kết:</span> P = Tổng ngày có mặt | V = Tổng ngày vắng | L = Tổng ngày nghỉ phép | S = Tổng ngày ốm | OT = Tổng ngày tăng ca
+                        💡 <span className="font-semibold">Cột tổng kết:</span> Hiển thị tổng số ngày cho từng trạng thái (Có mặt, Vắng, Nghỉ phép, Ốm, Tăng ca)
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        📌 <span className="font-semibold">Lưu ý:</span> Ký hiệu "/2" sau trạng thái biểu thị nửa ngày (ví dụ: P/2 = có mặt nửa ngày)
                       </p>
                     </div>
                   </div>
@@ -522,11 +525,11 @@ export default function ReportsPage() {
                             </th>
                           );
                         })}
-                        <th className="px-2 py-2 text-center font-bold bg-green-700">P</th>
-                        <th className="px-2 py-2 text-center font-bold bg-red-700">V</th>
-                        <th className="px-2 py-2 text-center font-bold bg-blue-700">L</th>
-                        <th className="px-2 py-2 text-center font-bold bg-purple-700">S</th>
-                        <th className="px-2 py-2 text-center font-bold bg-yellow-700">OT</th>
+                        <th className="px-2 py-2 text-center font-bold bg-green-700">Có mặt</th>
+                        <th className="px-2 py-2 text-center font-bold bg-red-700">Vắng</th>
+                        <th className="px-2 py-2 text-center font-bold bg-blue-700">Nghỉ phép</th>
+                        <th className="px-2 py-2 text-center font-bold bg-purple-700">Ốm</th>
+                        <th className="px-2 py-2 text-center font-bold bg-yellow-700">Tăng ca</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
