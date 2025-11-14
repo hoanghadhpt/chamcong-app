@@ -21,13 +21,27 @@ const DETAIL_COLUMNS = [
   { key: "note", label: "Ghi chú" },
 ];
 
+// Helper function to get first and last day of a month
+function getMonthBounds(year: number, month: number) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  return {
+    firstDay: firstDay.toISOString().split("T")[0],
+    lastDay: lastDay.toISOString().split("T")[0],
+  };
+}
+
+// Get current month bounds
+function getCurrentMonthBounds() {
+  const now = new Date();
+  return getMonthBounds(now.getFullYear(), now.getMonth());
+}
+
 export default function ExportPage() {
-  const [fromDate, setFromDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
-  const [toDate, setToDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  // Initialize with current month
+  const currentMonth = getCurrentMonthBounds();
+  const [fromDate, setFromDate] = useState(currentMonth.firstDay);
+  const [toDate, setToDate] = useState(currentMonth.lastDay);
   const [format, setFormat] = useState<"detail" | "matrix">("detail");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -35,6 +49,39 @@ export default function ExportPage() {
     new Set(DETAIL_COLUMNS.map((col) => col.key))
   );
   const [showColumnSelection, setShowColumnSelection] = useState(false);
+
+  // Month navigation handlers
+  const goToPreviousMonth = () => {
+    const current = new Date(fromDate);
+    const prevMonth = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    const bounds = getMonthBounds(prevMonth.getFullYear(), prevMonth.getMonth());
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  const goToNextMonth = () => {
+    const current = new Date(fromDate);
+    const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    const bounds = getMonthBounds(nextMonth.getFullYear(), nextMonth.getMonth());
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  const goToCurrentMonth = () => {
+    const bounds = getCurrentMonthBounds();
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  // Get current month/year display
+  const getCurrentMonthDisplay = () => {
+    const date = new Date(fromDate);
+    const monthNames = [
+      "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+      "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+    ];
+    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+  };
 
   const handleExport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +130,39 @@ export default function ExportPage() {
         </h2>
 
         <form onSubmit={handleExport} className="space-y-4 lg:space-y-6">
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 lg:p-4">
+            <button
+              type="button"
+              onClick={goToPreviousMonth}
+              className="px-3 lg:px-4 py-2 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg font-semibold text-blue-700 transition shadow-sm hover:shadow text-sm lg:text-base"
+              title="Tháng trước"
+            >
+              ◀ <span className="hidden sm:inline">Tháng trước</span>
+            </button>
+            <div className="flex items-center gap-2 lg:gap-3">
+              <span className="text-base lg:text-lg font-bold text-blue-900">
+                {getCurrentMonthDisplay()}
+              </span>
+              <button
+                type="button"
+                onClick={goToCurrentMonth}
+                className="px-2 lg:px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs lg:text-sm rounded-lg font-semibold transition"
+                title="Về tháng hiện tại"
+              >
+                Hôm nay
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={goToNextMonth}
+              className="px-3 lg:px-4 py-2 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg font-semibold text-blue-700 transition shadow-sm hover:shadow text-sm lg:text-base"
+              title="Tháng sau"
+            >
+              <span className="hidden sm:inline">Tháng sau</span> ▶
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
             <div>
               <label className="block text-sm lg:text-base font-medium text-gray-700 mb-2">

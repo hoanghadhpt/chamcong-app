@@ -35,16 +35,65 @@ interface AttendanceWithWorker extends AttendanceRecord {
   team: string | null;
 }
 
+// Helper function to get first and last day of a month
+function getMonthBounds(year: number, month: number) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  return {
+    firstDay: firstDay.toISOString().split("T")[0],
+    lastDay: lastDay.toISOString().split("T")[0],
+  };
+}
+
+// Get current month bounds
+function getCurrentMonthBounds() {
+  const now = new Date();
+  return getMonthBounds(now.getFullYear(), now.getMonth());
+}
+
 export default function ReportsPage() {
-  const [fromDate, setFromDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
-  const [toDate, setToDate] = useState(new Date().toISOString().split("T")[0]);
+  // Initialize with current month
+  const currentMonth = getCurrentMonthBounds();
+  const [fromDate, setFromDate] = useState(currentMonth.firstDay);
+  const [toDate, setToDate] = useState(currentMonth.lastDay);
   const [viewType, setViewType] = useState<"detail" | "matrix">("detail");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [attendanceData, setAttendanceData] = useState<AttendanceWithWorker[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+
+  // Month navigation handlers
+  const goToPreviousMonth = () => {
+    const current = new Date(fromDate);
+    const prevMonth = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    const bounds = getMonthBounds(prevMonth.getFullYear(), prevMonth.getMonth());
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  const goToNextMonth = () => {
+    const current = new Date(fromDate);
+    const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    const bounds = getMonthBounds(nextMonth.getFullYear(), nextMonth.getMonth());
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  const goToCurrentMonth = () => {
+    const bounds = getCurrentMonthBounds();
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  // Get current month/year display
+  const getCurrentMonthDisplay = () => {
+    const date = new Date(fromDate);
+    const monthNames = [
+      "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+      "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+    ];
+    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+  };
 
   // Fetch data
   useEffect(() => {
@@ -203,6 +252,36 @@ export default function ReportsPage() {
 
           {/* Controls */}
           <div className="space-y-4 mb-6">
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+              <button
+                onClick={goToPreviousMonth}
+                className="px-4 py-2 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg font-semibold text-blue-700 transition shadow-sm hover:shadow"
+                title="Tháng trước"
+              >
+                ◀ Tháng trước
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-bold text-blue-900">
+                  {getCurrentMonthDisplay()}
+                </span>
+                <button
+                  onClick={goToCurrentMonth}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-semibold transition"
+                  title="Về tháng hiện tại"
+                >
+                  Hôm nay
+                </button>
+              </div>
+              <button
+                onClick={goToNextMonth}
+                className="px-4 py-2 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg font-semibold text-blue-700 transition shadow-sm hover:shadow"
+                title="Tháng sau"
+              >
+                Tháng sau ▶
+              </button>
+            </div>
+
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -351,7 +430,73 @@ export default function ReportsPage() {
                 </div>
               )}
               {viewType === "matrix" && matrixData && (
-                <div className="relative">
+                <>
+                  {/* Legend / Chú thích */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h3 className="text-sm font-bold text-gray-700 mb-3">📖 Chú thích ký hiệu:</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-green-100 text-green-800 font-bold rounded flex items-center justify-center text-sm">
+                          P
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Có mặt</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Present)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-red-100 text-red-800 font-bold rounded flex items-center justify-center text-sm">
+                          V
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Vắng mặt</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Absent)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-800 font-bold rounded flex items-center justify-center text-sm">
+                          L
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Nghỉ phép</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Leave)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-purple-100 text-purple-800 font-bold rounded flex items-center justify-center text-sm">
+                          S
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Ốm đau</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Sick)</span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-yellow-100 text-yellow-800 font-bold rounded flex items-center justify-center text-xs">
+                          OT
+                        </div>
+                        <span className="text-sm text-gray-700">
+                          <span className="font-semibold">Tăng ca</span>
+                          <br />
+                          <span className="text-xs text-gray-500">(Overtime)</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <p className="text-xs text-gray-600">
+                        💡 <span className="font-semibold">Cột tổng kết:</span> Hiển thị tổng số ngày cho từng trạng thái (Có mặt, Vắng, Nghỉ phép, Ốm, Tăng ca)
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        📌 <span className="font-semibold">Lưu ý:</span> Ký hiệu "/2" sau trạng thái biểu thị nửa ngày (ví dụ: P/2 = có mặt nửa ngày)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="relative">
                   {/* Scroll Indicator */}
                   <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-200 to-transparent pointer-events-none z-20 rounded-r-lg"></div>
 
@@ -380,11 +525,11 @@ export default function ReportsPage() {
                             </th>
                           );
                         })}
-                        <th className="px-2 py-2 text-center font-bold bg-green-700">P</th>
-                        <th className="px-2 py-2 text-center font-bold bg-red-700">V</th>
-                        <th className="px-2 py-2 text-center font-bold bg-blue-700">L</th>
-                        <th className="px-2 py-2 text-center font-bold bg-purple-700">S</th>
-                        <th className="px-2 py-2 text-center font-bold bg-yellow-700">OT</th>
+                        <th className="px-2 py-2 text-center font-bold bg-green-700">Có mặt</th>
+                        <th className="px-2 py-2 text-center font-bold bg-red-700">Vắng</th>
+                        <th className="px-2 py-2 text-center font-bold bg-blue-700">Nghỉ phép</th>
+                        <th className="px-2 py-2 text-center font-bold bg-purple-700">Ốm</th>
+                        <th className="px-2 py-2 text-center font-bold bg-yellow-700">Tăng ca</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -485,6 +630,7 @@ export default function ReportsPage() {
                   </table>
                 </div>
                 </div>
+                </>
               )}
             </>
           )}
