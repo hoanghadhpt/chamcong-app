@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import KeyboardShortcutsHelp from "@/components/KeyboardShortcutsHelp";
+import GlobalSearch from "@/components/GlobalSearch";
 import { useState } from "react";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,7 @@ export default function AuthLayout({
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const router = useRouter();
 
   // Global keyboard shortcuts
@@ -28,6 +30,13 @@ export default function AuthLayout({
     ctrl: true,
     key: "b",
     onTrigger: () => setSidebarCollapsed(!sidebarCollapsed),
+    preventDefault: true,
+  });
+
+  useKeyboardShortcut({
+    ctrl: true,
+    key: "k",
+    onTrigger: () => setShowSearch(true),
     preventDefault: true,
   });
 
@@ -77,6 +86,9 @@ export default function AuthLayout({
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   );
 }

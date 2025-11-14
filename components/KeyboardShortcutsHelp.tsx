@@ -15,8 +15,8 @@ interface KeyboardShortcutsHelpProps {
 
 const SHORTCUTS: Shortcut[] = [
   // Navigation
-  { keys: ["Ctrl", "K"], description: "Mở tìm kiếm nhanh", category: "Navigation" },
-  { keys: ["Ctrl", "N"], description: "Thêm mới (tùy trang)", category: "Navigation" },
+  { keys: ["Ctrl", "K"], description: "Mở tìm kiếm toàn hệ thống", category: "Navigation" },
+  { keys: ["Ctrl", "B"], description: "Thu gọn/mở rộng sidebar", category: "Navigation" },
   { keys: ["Esc"], description: "Đóng modal/hủy", category: "Navigation" },
   { keys: ["?"], description: "Hiển thị shortcuts này", category: "Navigation" },
 
@@ -28,7 +28,7 @@ const SHORTCUTS: Shortcut[] = [
   { keys: ["Tab"], description: "Di chuyển đến ô tiếp theo", category: "Table" },
   { keys: ["Shift", "Tab"], description: "Di chuyển đến ô trước", category: "Table" },
   { keys: ["↑", "↓"], description: "Di chuyển lên/xuống hàng", category: "Table" },
-  { keys: ["←", "→"], description: "Di chuyển trái/phải cột", category: "Table" },
+  { keys: ["Enter"], description: "Chọn/Mở item đang focus", category: "Table" },
 ];
 
 export default function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {

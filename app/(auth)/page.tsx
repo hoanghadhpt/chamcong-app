@@ -8,6 +8,7 @@ import TeamSection from "@/components/TeamSection";
 import AttendanceTable from "@/components/AttendanceTable";
 import BottomSaveBar from "@/components/BottomSaveBar";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import QuickStatsWidget from "@/components/QuickStatsWidget";
 import { getOfflineQueue, addToQueue, removeFromQueue } from "@/lib/offlineQueue";
 import { vi, getCurrentTime } from "@/lib/i18n";
 
@@ -343,6 +344,11 @@ export default function HomePage() {
       <OfflineIndicator />
 
       <div className="space-y-4 pb-28 lg:pb-8 bg-beige-50 min-h-screen p-4 lg:p-6 xl:p-8">
+        {/* Quick Stats Widget - Desktop only */}
+        <div className="hidden lg:block">
+          <QuickStatsWidget />
+        </div>
+
         {/* Date Header */}
         <DateHeader
           selectedDate={selectedDate}
