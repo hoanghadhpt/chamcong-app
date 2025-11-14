@@ -24,6 +24,7 @@ interface WorkerRowProps {
   attendance: AttendanceRecord | undefined;
   onStatusChange: (workerId: number, status: string, isCheckIn: boolean, shiftAmount: number) => void;
   onCheckOut: (workerId: number) => void;
+  onTimeChange?: (workerId: number, field: 'check_in' | 'check_out', time: string) => void;
   className?: string;
 }
 
@@ -41,6 +42,7 @@ export default function WorkerRow({
   attendance,
   onStatusChange,
   onCheckOut,
+  onTimeChange,
   className = "",
 }: WorkerRowProps) {
   const currentStatus = attendance?.status;
@@ -117,21 +119,56 @@ export default function WorkerRow({
         </div>
       )}
 
-      {/* Check-in/Check-out Buttons (only for "present" status) */}
+      {/* Check-in/Check-out (only for "present" status) */}
       {currentStatus === "present" && (
-        <div className="flex flex-col sm:flex-row gap-2">
-          <button
-            onClick={() => onStatusChange(worker.id, "present", true, currentShiftAmount)}
-            className="flex-1 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-4 lg:px-5 py-3 lg:py-3.5 rounded-lg font-bold transition-all text-sm sm:text-base lg:text-lg shadow-md"
-          >
-            ⏰ Vào: {attendance?.check_in || "---"}
-          </button>
-          <button
-            onClick={() => onCheckOut(worker.id)}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-4 lg:px-5 py-3 lg:py-3.5 rounded-lg font-bold transition-all text-sm sm:text-base lg:text-lg shadow-md"
-          >
-            🏁 Ra: {attendance?.check_out || "---"}
-          </button>
+        <div className="space-y-2">
+          {/* Check In */}
+          <div className="space-y-1">
+            <label className="text-xs text-gray-600 font-medium">⏰ Giờ vào</label>
+            <div className="flex gap-2">
+              <input
+                type="time"
+                value={attendance?.check_in || ""}
+                onChange={(e) => {
+                  if (onTimeChange) {
+                    onTimeChange(worker.id, 'check_in', e.target.value);
+                  }
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="--:--"
+              />
+              <button
+                onClick={() => onStatusChange(worker.id, "present", true, currentShiftAmount)}
+                className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold text-xs transition-all shadow-sm whitespace-nowrap"
+              >
+                Hiện tại
+              </button>
+            </div>
+          </div>
+
+          {/* Check Out */}
+          <div className="space-y-1">
+            <label className="text-xs text-gray-600 font-medium">🏁 Giờ ra</label>
+            <div className="flex gap-2">
+              <input
+                type="time"
+                value={attendance?.check_out || ""}
+                onChange={(e) => {
+                  if (onTimeChange) {
+                    onTimeChange(worker.id, 'check_out', e.target.value);
+                  }
+                }}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="--:--"
+              />
+              <button
+                onClick={() => onCheckOut(worker.id)}
+                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-xs transition-all shadow-sm whitespace-nowrap"
+              >
+                Hiện tại
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

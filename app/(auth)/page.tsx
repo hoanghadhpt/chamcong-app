@@ -8,6 +8,7 @@ import TeamSection from "@/components/TeamSection";
 import AttendanceTable from "@/components/AttendanceTable";
 import BottomSaveBar from "@/components/BottomSaveBar";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import QuickStatsWidget from "@/components/QuickStatsWidget";
 import { getOfflineQueue, addToQueue, removeFromQueue } from "@/lib/offlineQueue";
 import { vi, getCurrentTime } from "@/lib/i18n";
 
@@ -195,6 +196,23 @@ export default function HomePage() {
     setChanges(newChanges);
   };
 
+  const handleTimeChange = (workerId: number, field: 'check_in' | 'check_out', time: string) => {
+    const existing = attendance.get(workerId) || changes.get(workerId);
+    const updated: AttendanceRecord = {
+      id: existing?.id || 0,
+      worker_id: workerId,
+      work_date: selectedDate,
+      status: existing?.status || "present",
+      check_in: field === 'check_in' ? time : (existing?.check_in || null),
+      check_out: field === 'check_out' ? time : (existing?.check_out || null),
+      shift_amount: existing?.shift_amount || 1.0,
+    };
+
+    const newChanges = new Map(changes);
+    newChanges.set(workerId, updated);
+    setChanges(newChanges);
+  };
+
   const handleBatchMark = async (teamName: string, status: string) => {
     setBatchMarking(teamName);
 
@@ -343,6 +361,11 @@ export default function HomePage() {
       <OfflineIndicator />
 
       <div className="space-y-4 pb-28 lg:pb-8 bg-beige-50 min-h-screen p-4 lg:p-6 xl:p-8">
+        {/* Quick Stats Widget - Desktop only */}
+        <div className="hidden lg:block">
+          <QuickStatsWidget />
+        </div>
+
         {/* Date Header */}
         <DateHeader
           selectedDate={selectedDate}
@@ -394,6 +417,7 @@ export default function HomePage() {
               changes={changes}
               onStatusChange={handleStatusChange}
               onCheckOut={handleCheckOut}
+              onTimeChange={handleTimeChange}
               searchQuery={searchQuery}
             />
           </div>
@@ -423,6 +447,7 @@ export default function HomePage() {
                   onToggleExpand={() => toggleTeamExpanded(team)}
                   onStatusChange={handleStatusChange}
                   onCheckOut={handleCheckOut}
+                  onTimeChange={handleTimeChange}
                   onBatchMark={handleBatchMark}
                   batchMarking={batchMarking}
                 />

@@ -370,16 +370,20 @@ export default function ReportsPage() {
                 </div>
               )}
               {viewType === "matrix" && matrixData && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white">
-                      <tr>
-                        <th className="px-2 py-2 text-left font-bold sticky left-0 bg-warm-dark z-10">
-                          Mã NV
-                        </th>
-                        <th className="px-2 py-2 text-left font-bold sticky left-16 bg-warm-dark z-10">
-                          Họ tên
-                        </th>
+                <div className="relative">
+                  {/* Scroll Indicator */}
+                  <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-200 to-transparent pointer-events-none z-20 rounded-r-lg"></div>
+
+                  <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white">
+                        <tr>
+                          <th className="px-2 py-2 text-left font-bold sticky left-0 bg-warm-dark z-30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
+                            Mã NV
+                          </th>
+                          <th className="px-2 py-2 text-left font-bold sticky left-[4rem] bg-warm-dark z-30 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
+                            Họ tên
+                          </th>
                         {matrixData.dates.map((date) => {
                           const d = new Date(date);
                           const day = d.getDate();
@@ -425,11 +429,11 @@ export default function ReportsPage() {
                         </tr>
                       ) : (
                         matrixData.workerRows.map((row) => (
-                          <tr key={row.worker.id} className="hover:bg-gray-50">
-                            <td className="px-2 py-2 font-medium sticky left-0 bg-white">
+                          <tr key={row.worker.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-2 py-2 font-medium sticky left-0 bg-white z-20 shadow-[2px_0_4px_rgba(0,0,0,0.05)] border-r border-gray-200">
                               {row.worker.code}
                             </td>
-                            <td className="px-2 py-2 font-semibold sticky left-16 bg-white">
+                            <td className="px-2 py-2 font-semibold sticky left-[4rem] bg-white z-20 shadow-[2px_0_4px_rgba(0,0,0,0.05)] border-r-2 border-gray-300">
                               {row.worker.name}
                             </td>
                             {row.dateData.map((record, idx) => {
@@ -498,6 +502,7 @@ export default function ReportsPage() {
                       )}
                     </tbody>
                   </table>
+                </div>
                 </div>
               )}
             </>
