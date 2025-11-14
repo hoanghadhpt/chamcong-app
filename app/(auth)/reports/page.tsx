@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Toast from "@/components/Toast";
 import AttendanceStatusChip from "@/components/AttendanceStatusChip";
-import { vi } from "@/lib/i18n";
+import { vi, extractTimeFromTimestamp } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -30,9 +30,9 @@ interface AttendanceRecord {
 }
 
 interface AttendanceWithWorker extends AttendanceRecord {
-  worker_code: string;
-  worker_name: string;
-  worker_team: string | null;
+  workerCode: string;
+  workerName: string;
+  team: string | null;
 }
 
 export default function ReportsPage() {
@@ -69,25 +69,9 @@ export default function ReportsPage() {
         }
 
         if (attendanceRes.ok) {
-          const attendanceRecords: AttendanceRecord[] = await attendanceRes.json();
+          const attendanceRecords: AttendanceWithWorker[] = await attendanceRes.json();
           console.log("Attendance records fetched:", attendanceRecords.length);
-
-          // Merge with worker data
-          const workersMap = new Map<number, Worker>();
-          workersData.forEach((w: Worker) => workersMap.set(w.id, w));
-
-          const merged: AttendanceWithWorker[] = attendanceRecords.map((record) => {
-            const worker = workersMap.get(record.worker_id);
-            return {
-              ...record,
-              worker_code: worker?.code || "---",
-              worker_name: worker?.name || "---",
-              worker_team: worker?.team || null,
-            };
-          });
-
-          console.log("Merged attendance data:", merged.length);
-          setAttendanceData(merged);
+          setAttendanceData(attendanceRecords);
         } else {
           console.error("Failed to fetch attendance:", attendanceRes.status);
         }
@@ -329,10 +313,10 @@ export default function ReportsPage() {
                             <td className="px-3 py-2 text-sm">
                               {new Date(record.work_date).toLocaleDateString("vi-VN")}
                             </td>
-                            <td className="px-3 py-2 text-sm font-medium">{record.worker_code}</td>
-                            <td className="px-3 py-2 text-sm font-semibold">{record.worker_name}</td>
+                            <td className="px-3 py-2 text-sm font-medium">{record.workerCode}</td>
+                            <td className="px-3 py-2 text-sm font-semibold">{record.workerName}</td>
                             <td className="px-3 py-2 text-sm text-gray-600">
-                              {record.worker_team || "---"}
+                              {record.team || "---"}
                             </td>
                             <td className="px-3 py-2">
                               <AttendanceStatusChip status={record.status as any} size="sm" />
@@ -341,10 +325,10 @@ export default function ReportsPage() {
                               {record.shift_amount || 1.0}
                             </td>
                             <td className="px-3 py-2 text-center text-sm">
-                              {record.check_in || "---"}
+                              {extractTimeFromTimestamp(record.check_in) || "---"}
                             </td>
                             <td className="px-3 py-2 text-center text-sm">
-                              {record.check_out || "---"}
+                              {extractTimeFromTimestamp(record.check_out) || "---"}
                             </td>
                             <td className="px-3 py-2 text-center text-sm">
                               {record.late_minutes || 0}
