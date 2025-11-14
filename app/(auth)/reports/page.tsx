@@ -35,16 +35,65 @@ interface AttendanceWithWorker extends AttendanceRecord {
   team: string | null;
 }
 
+// Helper function to get first and last day of a month
+function getMonthBounds(year: number, month: number) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  return {
+    firstDay: firstDay.toISOString().split("T")[0],
+    lastDay: lastDay.toISOString().split("T")[0],
+  };
+}
+
+// Get current month bounds
+function getCurrentMonthBounds() {
+  const now = new Date();
+  return getMonthBounds(now.getFullYear(), now.getMonth());
+}
+
 export default function ReportsPage() {
-  const [fromDate, setFromDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  );
-  const [toDate, setToDate] = useState(new Date().toISOString().split("T")[0]);
+  // Initialize with current month
+  const currentMonth = getCurrentMonthBounds();
+  const [fromDate, setFromDate] = useState(currentMonth.firstDay);
+  const [toDate, setToDate] = useState(currentMonth.lastDay);
   const [viewType, setViewType] = useState<"detail" | "matrix">("detail");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [attendanceData, setAttendanceData] = useState<AttendanceWithWorker[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+
+  // Month navigation handlers
+  const goToPreviousMonth = () => {
+    const current = new Date(fromDate);
+    const prevMonth = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    const bounds = getMonthBounds(prevMonth.getFullYear(), prevMonth.getMonth());
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  const goToNextMonth = () => {
+    const current = new Date(fromDate);
+    const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    const bounds = getMonthBounds(nextMonth.getFullYear(), nextMonth.getMonth());
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  const goToCurrentMonth = () => {
+    const bounds = getCurrentMonthBounds();
+    setFromDate(bounds.firstDay);
+    setToDate(bounds.lastDay);
+  };
+
+  // Get current month/year display
+  const getCurrentMonthDisplay = () => {
+    const date = new Date(fromDate);
+    const monthNames = [
+      "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+      "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+    ];
+    return `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+  };
 
   // Fetch data
   useEffect(() => {
@@ -203,6 +252,36 @@ export default function ReportsPage() {
 
           {/* Controls */}
           <div className="space-y-4 mb-6">
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+              <button
+                onClick={goToPreviousMonth}
+                className="px-4 py-2 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg font-semibold text-blue-700 transition shadow-sm hover:shadow"
+                title="Tháng trước"
+              >
+                ◀ Tháng trước
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-bold text-blue-900">
+                  {getCurrentMonthDisplay()}
+                </span>
+                <button
+                  onClick={goToCurrentMonth}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-semibold transition"
+                  title="Về tháng hiện tại"
+                >
+                  Hôm nay
+                </button>
+              </div>
+              <button
+                onClick={goToNextMonth}
+                className="px-4 py-2 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg font-semibold text-blue-700 transition shadow-sm hover:shadow"
+                title="Tháng sau"
+              >
+                Tháng sau ▶
+              </button>
+            </div>
+
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
               <div>
