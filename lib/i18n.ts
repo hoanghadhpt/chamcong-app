@@ -346,3 +346,23 @@ export function getCurrentTime(): string {
     now.getMinutes()
   ).padStart(2, "0")}`;
 }
+
+// Extract time from timestamp (YYYY-MM-DD HH:MM:SS) -> HH:MM
+// Avoids timezone conversion issues by doing string extraction
+export function extractTimeFromTimestamp(timestamp: string | null): string {
+  if (!timestamp) return "";
+
+  // If already in HH:MM format, return as is
+  if (/^\d{2}:\d{2}$/.test(timestamp)) {
+    return timestamp;
+  }
+
+  // Extract time portion from timestamp string
+  // Format: "2025-11-14 16:10:00" -> "16:10"
+  const timeMatch = timestamp.match(/(\d{2}):(\d{2})(?::\d{2})?/);
+  if (timeMatch) {
+    return `${timeMatch[1]}:${timeMatch[2]}`;
+  }
+
+  return "";
+}

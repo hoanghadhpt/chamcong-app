@@ -1,6 +1,7 @@
 "use client";
 
 import AttendanceStatusChip from "./AttendanceStatusChip";
+import { extractTimeFromTimestamp } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -128,7 +129,7 @@ export default function WorkerRow({
             <div className="flex gap-2">
               <input
                 type="time"
-                value={attendance?.check_in || ""}
+                value={extractTimeFromTimestamp(attendance?.check_in || null)}
                 onChange={(e) => {
                   if (onTimeChange) {
                     onTimeChange(worker.id, 'check_in', e.target.value);
@@ -152,7 +153,7 @@ export default function WorkerRow({
             <div className="flex gap-2">
               <input
                 type="time"
-                value={attendance?.check_out || ""}
+                value={extractTimeFromTimestamp(attendance?.check_out || null)}
                 onChange={(e) => {
                   if (onTimeChange) {
                     onTimeChange(worker.id, 'check_out', e.target.value);

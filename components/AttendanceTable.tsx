@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import AttendanceStatusChip from "./AttendanceStatusChip";
+import { extractTimeFromTimestamp } from "@/lib/i18n";
 
 interface Worker {
   id: number;
@@ -203,7 +204,7 @@ export default function AttendanceTable({
                             onClick={() => onStatusChange(worker.id, "present", true, current.shift_amount || 1.0)}
                             className="text-green-600 hover:text-green-800 font-semibold hover:underline"
                           >
-                            {current.check_in || "Chấm vào"}
+                            {extractTimeFromTimestamp(current.check_in) || "Chấm vào"}
                           </button>
                         ) : (
                           <span className="text-gray-400">---</span>
@@ -215,7 +216,7 @@ export default function AttendanceTable({
                             onClick={() => onCheckOut(worker.id)}
                             className="text-orange-600 hover:text-orange-800 font-semibold hover:underline"
                           >
-                            {current.check_out || "Chấm ra"}
+                            {extractTimeFromTimestamp(current.check_out) || "Chấm ra"}
                           </button>
                         ) : (
                           <span className="text-gray-400">---</span>
@@ -314,7 +315,7 @@ export default function AttendanceTable({
                                     <div className="flex gap-2">
                                       <input
                                         type="time"
-                                        value={current.check_in || ""}
+                                        value={extractTimeFromTimestamp(current.check_in || null)}
                                         onChange={(e) => {
                                           if (onTimeChange) {
                                             onTimeChange(worker.id, 'check_in', e.target.value);
@@ -343,7 +344,7 @@ export default function AttendanceTable({
                                     <div className="flex gap-2">
                                       <input
                                         type="time"
-                                        value={current.check_out || ""}
+                                        value={extractTimeFromTimestamp(current.check_out || null)}
                                         onChange={(e) => {
                                           if (onTimeChange) {
                                             onTimeChange(worker.id, 'check_out', e.target.value);
