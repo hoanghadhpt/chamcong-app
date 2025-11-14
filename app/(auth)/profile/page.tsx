@@ -14,6 +14,23 @@ interface ProfileData {
   created_at: string;
 }
 
+// Helper function to generate automatic avatar URL
+function getAvatarUrl(profile: ProfileData | null, customUrl: string): string {
+  // If custom URL provided, use it
+  if (customUrl && customUrl.trim()) {
+    return customUrl;
+  }
+
+  // Otherwise, generate automatic avatar from name or email
+  if (!profile) return "";
+
+  const name = profile.display_name || profile.email.split("@")[0];
+  const encodedName = encodeURIComponent(name);
+
+  // Using UI Avatars API with app's color scheme
+  return `https://ui-avatars.com/api/?name=${encodedName}&background=CC785C&color=fff&size=256&bold=true`;
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +103,9 @@ export default function ProfilePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Get the avatar URL (custom or auto-generated)
+  const currentAvatarUrl = getAvatarUrl(profile, formData.avatar_url);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -104,21 +124,23 @@ export default function ProfilePage() {
             <p className="text-gray-300">Quản lý thông tin profile của bạn</p>
           </div>
 
-          {/* Avatar Preview */}
-          {formData.avatar_url && (
-            <div className="mb-6 flex justify-center">
-              <div className="relative">
-                <img
-                  src={formData.avatar_url}
-                  alt="Avatar"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-accent shadow-lg"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
+          {/* Avatar Preview - Always shown */}
+          <div className="mb-8 flex flex-col items-center">
+            <div className="relative">
+              <img
+                src={currentAvatarUrl}
+                alt="Avatar"
+                className="w-32 h-32 rounded-full object-cover border-4 border-accent shadow-lg"
+              />
+              {!formData.avatar_url && (
+                <div className="mt-2 text-center">
+                  <span className="text-xs text-gray-400 bg-black/30 px-3 py-1 rounded-full">
+                    Avatar tự động
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Profile Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,7 +193,7 @@ export default function ProfilePage() {
             {/* Avatar URL */}
             <div>
               <label htmlFor="avatar_url" className="block text-sm font-medium text-white mb-2">
-                URL ảnh đại diện
+                URL ảnh đại diện (Tùy chọn)
               </label>
               <input
                 type="url"
@@ -182,7 +204,9 @@ export default function ProfilePage() {
                 className="w-full px-4 py-3 rounded-xl bg-black/30 text-white border border-white/20 focus:border-accent focus:ring-2 focus:ring-accent/50 transition-all"
                 placeholder="https://example.com/avatar.jpg"
               />
-              <p className="text-xs text-gray-400 mt-1">Nhập URL của ảnh đại diện</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Để trống để sử dụng avatar tự động từ tên của bạn
+              </p>
             </div>
 
             {/* Bio */}

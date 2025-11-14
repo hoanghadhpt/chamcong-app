@@ -2,17 +2,41 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
 
+interface UserProfile {
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    // Fetch user profile for avatar
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch("/api/profile");
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -28,6 +52,25 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
   };
 
   const isActive = (path: string) => pathname === path;
+
+  // Generate avatar URL (custom or auto-generated)
+  const getAvatarUrl = (): string => {
+    if (profile?.avatar_url) {
+      return profile.avatar_url;
+    }
+
+    if (profile) {
+      const name = profile.display_name || profile.email.split("@")[0];
+      const encodedName = encodeURIComponent(name);
+      return `https://ui-avatars.com/api/?name=${encodedName}&background=CC785C&color=fff&size=128&bold=true`;
+    }
+
+    return "";
+  };
+
+  const displayName = profile?.display_name || "Quản lý";
+  const displayEmail = profile?.email || "manager@example.com";
+  const avatarUrl = getAvatarUrl();
 
   const navItems = [
     { path: "/", label: "Chấm công", icon: "✅" },
@@ -119,29 +162,55 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       <div className="p-3 border-t border-beige-100/10 space-y-2" role="contentinfo" aria-label="Thông tin người dùng">
         {/* User Info */}
         {!isCollapsed && (
-          <div className="px-4 py-3 bg-beige-100/5 rounded-xl border border-beige-100/10" role="status" aria-live="polite">
+          <Link
+            href="/profile"
+            className="block px-4 py-3 bg-beige-100/5 hover:bg-beige-100/10 rounded-xl border border-beige-100/10 hover:border-beige-100/20 transition-all cursor-pointer"
+            role="status"
+            aria-live="polite"
+          >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl" aria-hidden="true">
-                👤
-              </div>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="User avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-accent"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl" aria-hidden="true">
+                  👤
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-white truncate">
-                  Quản lý
+                  {displayName}
                 </p>
                 <p className="text-xs text-beige-100/70 truncate">
-                  manager@example.com
+                  {displayEmail}
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
         )}
 
         {isCollapsed && (
-          <div className="flex justify-center" role="status" aria-label="Người dùng: Quản lý">
-            <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl" aria-hidden="true">
-              👤
-            </div>
-          </div>
+          <Link
+            href="/profile"
+            className="flex justify-center hover:opacity-80 transition-opacity"
+            role="status"
+            aria-label={`Người dùng: ${displayName}`}
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="User avatar"
+                className="w-10 h-10 rounded-full object-cover border-2 border-accent"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl" aria-hidden="true">
+                👤
+              </div>
+            )}
+          </Link>
         )}
 
         {/* Logout Button */}
