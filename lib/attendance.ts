@@ -127,6 +127,16 @@ export async function upsertAttendance(
 ): Promise<AttendanceRecord> {
   const db = getDB();
 
+  // Convert time-only strings (HH:MM) to full timestamps (YYYY-MM-DD HH:MM:SS)
+  // This handles cases where frontend sends just time instead of full timestamp
+  const checkInTimestamp = checkIn && /^\d{2}:\d{2}(:\d{2})?$/.test(checkIn)
+    ? `${workDate} ${checkIn}${checkIn.length === 5 ? ':00' : ''}`
+    : checkIn;
+
+  const checkOutTimestamp = checkOut && /^\d{2}:\d{2}(:\d{2})?$/.test(checkOut)
+    ? `${workDate} ${checkOut}${checkOut.length === 5 ? ':00' : ''}`
+    : checkOut;
+
   const existingResult = await db.query(
     "SELECT id FROM attendance WHERE manager_id = $1 AND worker_id = $2 AND work_date = $3",
     [managerId, workerId, workDate]
@@ -142,8 +152,8 @@ export async function upsertAttendance(
        WHERE id = $12`,
       [
         status,
-        checkIn,
-        checkOut,
+        checkInTimestamp,
+        checkOutTimestamp,
         lateMinutes,
         earlyMinutes,
         ot_1_5,
@@ -171,8 +181,8 @@ export async function upsertAttendance(
         workerId,
         workDate,
         status,
-        checkIn,
-        checkOut,
+        checkInTimestamp,
+        checkOutTimestamp,
         lateMinutes,
         earlyMinutes,
         ot_1_5,
