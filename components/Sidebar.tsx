@@ -48,35 +48,38 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         transition-all duration-300 ease-in-out
         ${isCollapsed ? "w-20" : "w-64"}
       `}
+      role="navigation"
+      aria-label="Navigation chính"
     >
       {/* Logo & Toggle */}
       <div className="p-4 border-b border-beige-100/10">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">📱</span>
+            <div className="flex items-center gap-2" role="banner">
+              <span className="text-2xl" aria-hidden="true">📱</span>
               <h1 className="text-xl font-bold">Chấm Công</h1>
             </div>
           )}
           {isCollapsed && (
-            <div className="flex justify-center w-full">
-              <span className="text-2xl">📱</span>
+            <div className="flex justify-center w-full" role="banner">
+              <span className="text-2xl" aria-hidden="true">📱</span>
             </div>
           )}
         </div>
         <button
           onClick={onToggleCollapse}
-          className="absolute -right-3 top-6 bg-accent hover:bg-accent-light active:scale-95 w-6 h-6 rounded-full flex items-center justify-center shadow-lg transition-all border-2 border-white"
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="absolute -right-3 top-6 bg-accent hover:bg-accent-light active:scale-95 w-6 h-6 rounded-full flex items-center justify-center shadow-lg transition-all border-2 border-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-warm-dark"
+          aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+          aria-expanded={!isCollapsed}
         >
-          <span className="text-xs font-bold text-white">
+          <span className="text-xs font-bold text-white" aria-hidden="true">
             {isCollapsed ? "→" : "←"}
           </span>
         </button>
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-2 overflow-y-auto" aria-label="Menu điều hướng">
         {navItems.map((item) => {
           const active = isActive(item.path);
 
@@ -90,6 +93,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
                 rounded-xl
                 font-bold
                 transition-all
+                focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-warm-dark
                 ${
                   active
                     ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-lg shadow-accent/30 scale-105"
@@ -98,8 +102,10 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
                 ${isCollapsed ? "justify-center" : ""}
               `}
               title={isCollapsed ? item.label : undefined}
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl" aria-hidden="true">{item.icon}</span>
               {!isCollapsed && (
                 <span className="text-base whitespace-nowrap">{item.label}</span>
               )}
@@ -109,12 +115,12 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       </nav>
 
       {/* User Profile & Logout */}
-      <div className="p-3 border-t border-beige-100/10 space-y-2">
+      <div className="p-3 border-t border-beige-100/10 space-y-2" role="contentinfo" aria-label="Thông tin người dùng">
         {/* User Info */}
         {!isCollapsed && (
-          <div className="px-4 py-3 bg-beige-100/5 rounded-xl border border-beige-100/10">
+          <div className="px-4 py-3 bg-beige-100/5 rounded-xl border border-beige-100/10" role="status" aria-live="polite">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl">
+              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl" aria-hidden="true">
                 👤
               </div>
               <div className="flex-1 min-w-0">
@@ -130,8 +136,8 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         )}
 
         {isCollapsed && (
-          <div className="flex justify-center">
-            <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl">
+          <div className="flex justify-center" role="status" aria-label="Người dùng: Quản lý">
+            <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-xl" aria-hidden="true">
               👤
             </div>
           </div>
@@ -148,14 +154,17 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
             rounded-xl
             font-bold
             transition-all
-            disabled:opacity-50
+            disabled:opacity-50 disabled:cursor-not-allowed
             shadow-md
             flex items-center gap-2
+            focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-warm-dark
             ${isCollapsed ? "justify-center" : "justify-center"}
           `}
           title={isCollapsed ? "Đăng xuất" : undefined}
+          aria-label={loading ? "Đang đăng xuất..." : "Đăng xuất"}
+          aria-busy={loading}
         >
-          <span className="text-lg">🚪</span>
+          <span className="text-lg" aria-hidden="true">🚪</span>
           {!isCollapsed && (
             <span className="text-sm">
               {loading ? "Đang thoát..." : "Đăng xuất"}
