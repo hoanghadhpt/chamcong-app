@@ -237,6 +237,15 @@ export function parseDate(dateStr: string): string {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
+// Format Date object to YYYY-MM-DD in local timezone (no timezone conversion)
+// This prevents timezone-related date shifts when using toISOString()
+export function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Get day name in Vietnamese
 export function getDayNameVi(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;

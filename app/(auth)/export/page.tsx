@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Toast from "@/components/Toast";
-import { vi } from "@/lib/i18n";
+import { vi, formatDateLocal } from "@/lib/i18n";
 
 const DETAIL_COLUMNS = [
   { key: "date", label: "Ngày" },
@@ -26,8 +26,8 @@ function getMonthBounds(year: number, month: number) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   return {
-    firstDay: firstDay.toISOString().split("T")[0],
-    lastDay: lastDay.toISOString().split("T")[0],
+    firstDay: formatDateLocal(firstDay),
+    lastDay: formatDateLocal(lastDay),
   };
 }
 
