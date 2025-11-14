@@ -139,17 +139,15 @@ export default function ReportsPage() {
       dates.push(d.toISOString().split("T")[0]);
     }
 
-    console.log("Ma trận - Số workers:", workers.length);
-    console.log("Ma trận - Số ngày:", dates.length);
-    console.log("Ma trận - Số bản ghi attendance:", attendanceData.length);
-
     // Create matrix
     const workerRows = workers.map((worker) => {
       const attendanceMap = new Map<string, AttendanceRecord>();
       const filteredAttendance = attendanceData.filter((a) => a.worker_id === worker.id);
 
       filteredAttendance.forEach((a) => {
-        attendanceMap.set(a.work_date, a);
+        // Normalize work_date to YYYY-MM-DD format (remove time part)
+        const normalizedDate = a.work_date.split('T')[0];
+        attendanceMap.set(normalizedDate, a);
       });
 
       const dateData = dates.map((date) => attendanceMap.get(date) || null);
@@ -170,7 +168,6 @@ export default function ReportsPage() {
       };
     });
 
-    console.log("Ma trận - Đã tạo", workerRows.length, "rows");
     return { dates, workerRows };
   }, [viewType, workers, attendanceData, fromDate, toDate]);
 

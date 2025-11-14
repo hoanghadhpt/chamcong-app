@@ -17,7 +17,10 @@ export function getDB(): Pool {
       connectionString: getDatabaseUrl(),
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 60000, // Increased to 60s for remote DB
+      ssl: process.env.DATABASE_URL?.includes('localhost') ? false : {
+        rejectUnauthorized: false // For remote DB with self-signed cert
+      }
     });
 
     // Initialize schema on first connection
