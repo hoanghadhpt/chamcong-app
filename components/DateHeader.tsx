@@ -1,6 +1,7 @@
 "use client";
 
 import { formatDate } from "@/lib/i18n";
+import { CalendarDays } from "lucide-react";
 
 interface DateHeaderProps {
   selectedDate: string;
@@ -26,30 +27,34 @@ export default function DateHeader({
   });
 
   return (
-    <div className={`bg-gradient-to-br from-beige-50 to-white rounded-xl shadow-lg border border-beige-200 p-5 ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-soft border border-gray-100 p-5 h-full flex flex-col justify-center ${className}`}>
       {/* Title */}
-      <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-        <span className="text-2xl">📅</span>
+      <h2 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
+        <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
+          <CalendarDays className="w-5 h-5" />
+        </div>
         <span>Chấm công ngày</span>
       </h2>
 
       {/* Date Picker with Today Badge */}
-      <div className="flex gap-2 items-center">
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => onDateChange(e.target.value)}
-          className="flex-1 px-4 py-3 border-2 border-beige-200 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-base font-medium transition-all hover:border-accent-light"
-        />
+      <div className="flex gap-3 items-center">
+        <div className="relative flex-1">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => onDateChange(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-200 bg-gray-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-base font-medium transition-all hover:bg-white"
+          />
+        </div>
         {isToday && (
-          <span className="text-xs bg-gradient-to-r from-accent to-accent-light text-white px-3 py-2 rounded-lg font-bold whitespace-nowrap shadow-md">
+          <span className="text-xs bg-success/10 text-success px-3 py-1.5 rounded-lg font-bold whitespace-nowrap border border-success/20">
             Hôm nay
           </span>
         )}
       </div>
 
       {/* Formatted Date Display */}
-      <p className="text-sm text-warm-dark/70 mt-3 font-medium">
+      <p className="text-sm text-text-muted mt-2 font-medium capitalize">
         {formattedDate}
       </p>
     </div>

@@ -3,6 +3,15 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
+import { 
+  LayoutDashboard, 
+  Users, 
+  BarChart3, 
+  Download, 
+  User, 
+  LogOut,
+  Menu
+} from "lucide-react";
 
 export default function Navigation() {
   const router = useRouter();
@@ -25,50 +34,60 @@ export default function Navigation() {
   const isActive = (path: string) => pathname === path;
 
   const navItems = [
-    { path: "/", label: "Chấm công", icon: "✅" },
-    { path: "/workers", label: "Nhân viên", icon: "👥" },
-    { path: "/reports", label: "Báo cáo", icon: "📊" },
-    { path: "/export", label: "Xuất BC", icon: "💾" },
-    { path: "/profile", label: "Profile", icon: "👤" },
+    { path: "/", label: "Chấm công", icon: LayoutDashboard },
+    { path: "/workers", label: "Nhân viên", icon: Users },
+    { path: "/reports", label: "Báo cáo", icon: BarChart3 },
+    { path: "/export", label: "Xuất BC", icon: Download },
+    { path: "/profile", label: "Profile", icon: User },
   ];
 
   return (
-    <nav className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white sticky top-0 z-50 shadow-xl border-b-2 border-accent/30">
-      <div className="px-4 lg:px-6 xl:px-8 py-3">
+    <nav className="bg-white sticky top-0 z-50 shadow-lg border-b border-gray-100">
+      <div className="px-4 py-3">
         {/* Header with Logo and Logout */}
-        <div className="flex items-center justify-between mb-3">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-center gap-2">
-            <span>📱</span>
-            <span>Chấm Công</span>
-          </h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shadow-lg shadow-primary-500/30">
+              <span className="text-white font-bold text-lg">C</span>
+            </div>
+            <h1 className="text-xl font-bold text-text-primary">Chấm Công</h1>
+          </div>
           <button
             onClick={handleLogout}
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-3 sm:px-4 lg:px-6 py-2 lg:py-2.5 rounded-lg text-xs sm:text-sm lg:text-base font-bold transition-all disabled:opacity-50 shadow-md"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-error hover:bg-error/5 transition-colors disabled:opacity-50"
           >
-            {loading ? "⏳ Đang thoát..." : "🚪 Thoát"}
+            <LogOut className="w-4 h-4" />
+            {loading ? "Đang thoát..." : "Thoát"}
           </button>
         </div>
 
-        {/* Navigation Tabs - Responsive: horizontal scroll on mobile, centered on desktop */}
-        <div className="flex gap-2 overflow-x-auto lg:overflow-x-visible lg:justify-center pb-1 scrollbar-hide">
+        {/* Navigation Tabs - Horizontal scroll on mobile */}
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {navItems.map((item) => {
             const active = isActive(item.path);
-            // Hide "Báo cáo" on mobile (desktop only)
-            const isReportsPage = item.path === "/reports";
-            const responsiveClass = isReportsPage ? "hidden lg:flex" : "flex";
-
+            const Icon = item.icon;
+            
+            // Hide "Báo cáo" on very small screens if needed, but horizontal scroll handles it
+            
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`${responsiveClass} px-4 lg:px-6 py-2.5 lg:py-3 rounded-xl font-bold transition-all whitespace-nowrap text-sm lg:text-base items-center gap-2 shadow-md ${
-                  active
-                    ? "bg-gradient-to-r from-accent to-accent-light text-white scale-105 shadow-accent/50"
-                    : "bg-beige-100/10 hover:bg-beige-100/20 active:bg-beige-100/30 text-beige-100 border border-beige-100/20"
-                }`}
+                className={`
+                  flex items-center gap-2
+                  px-4 py-2.5
+                  rounded-xl
+                  font-bold text-sm whitespace-nowrap
+                  transition-all
+                  ${
+                    active
+                      ? "bg-primary-500 text-white shadow-lg shadow-primary-500/30"
+                      : "bg-gray-50 text-text-secondary hover:bg-gray-100"
+                  }
+                `}
               >
-                <span className="text-base lg:text-lg">{item.icon}</span>
+                <Icon className={`w-4 h-4 ${active ? "text-white" : "text-text-muted"}`} />
                 <span>{item.label}</span>
               </Link>
             );

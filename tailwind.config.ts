@@ -8,18 +8,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#CC785C",
-        accent: "#D97757",
-        "accent-light": "#E8956E",
-        beige: {
-          50: "#FBF8F3",
-          100: "#F5EFE6",
-          200: "#E8DCC8",
+        primary: {
+          DEFAULT: "#CC785C",
+          foreground: "#FFFFFF",
+          50: "#FDF8F6",
+          100: "#FCEFE9",
+          200: "#F8DCCF",
+          300: "#F2C6B0",
+          400: "#E8956E",
+          500: "#CC785C",
+          600: "#B05D41",
+          700: "#8F462E",
+          800: "#703624",
+          900: "#5C2D1F",
         },
-        "warm-dark": "#2B1810",
+        background: "#FBF8F3",
+        surface: "#FFFFFF",
+        "surface-highlight": "#F5EFE6",
+        border: "#E5E7EB",
+        text: {
+          primary: "#2B1810",
+          secondary: "#5C4A42",
+          muted: "#8F7E77",
+        },
+        success: "#4CAF50",
+        warning: "#FFC107",
+        error: "#EF5350",
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        'soft': '0 4px 20px -2px rgba(43, 24, 16, 0.05)',
+        'card': '0 0 0 1px rgba(43, 24, 16, 0.04), 0 2px 8px rgba(43, 24, 16, 0.04)',
+        'card-hover': '0 0 0 1px rgba(43, 24, 16, 0.08), 0 8px 24px rgba(43, 24, 16, 0.08)',
+      },
+      borderRadius: {
+        'xl': '1rem',
+        '2xl': '1.5rem',
+        '3xl': '2rem',
       },
       animation: {
-        slideUp: "slideUp 0.3s ease-out",
+        slideUp: "slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        fadeIn: "fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        scaleIn: "scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
       },
       keyframes: {
         slideUp: {
@@ -31,6 +63,14 @@ const config: Config = {
             opacity: "1",
             transform: "translateY(0)",
           },
+        },
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        scaleIn: {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
         },
       },
     },

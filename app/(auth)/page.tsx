@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Toast from "@/components/Toast";
 import DateHeader from "@/components/DateHeader";
 import TeamFilter from "@/components/TeamFilter";
@@ -9,26 +9,8 @@ import AttendanceTable from "@/components/AttendanceTable";
 import BottomSaveBar from "@/components/BottomSaveBar";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import QuickStatsWidget from "@/components/QuickStatsWidget";
-import { getOfflineQueue, addToQueue, removeFromQueue } from "@/lib/offlineQueue";
-import { vi, getCurrentTime } from "@/lib/i18n";
-
-interface Worker {
-  id: number;
-  code: string;
-  name: string;
-  team: string | null;
-  active: number;
-}
-
-interface AttendanceRecord {
-  id: number;
-  worker_id: number;
-  work_date: string;
-  status: string | null;
-  check_in: string | null;
-  check_out: string | null;
-  shift_amount?: number;
-}
+import { useAttendance, Worker, AttendanceRecord } from "@/hooks/useAttendance";
+import { LayoutGrid, List, Search } from "lucide-react";
 
 // Get unique teams and group workers by team
 const groupWorkersByTeam = (workers: Worker[]): Map<string, Worker[]> => {
@@ -44,27 +26,29 @@ const groupWorkersByTeam = (workers: Worker[]): Map<string, Worker[]> => {
 };
 
 export default function HomePage() {
-  const [workers, setWorkers] = useState<Worker[]>([]);
-  const [attendance, setAttendance] = useState<Map<number, AttendanceRecord>>(
-    new Map()
-  );
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{
-    message: string;
-    offline?: boolean;
-  } | null>(null);
-  const [isOnline, setIsOnline] = useState(true);
-  const [changes, setChanges] = useState<Map<number, AttendanceRecord>>(
-    new Map()
-  );
-  const [batchMarking, setBatchMarking] = useState<string | null>(null);
-  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   });
+
+  const {
+    workers,
+    attendance,
+    changes,
+    loading,
+    saving,
+    toast,
+    setToast,
+    setAttendance,
+    handleStatusChange,
+    handleCheckOut,
+    handleTimeChange,
+    saveAll,
+  } = useAttendance({ selectedDate });
+
+  const [batchMarking, setBatchMarking] = useState<string | null>(null);
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
 
   // Toggle team expansion (optimized with useCallback)
@@ -112,107 +96,6 @@ export default function HomePage() {
 
     return filtered;
   }, [workers, searchQuery]);
-
-  useEffect(() => {
-    fetchData();
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, [selectedDate]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [workersRes, attendanceRes] = await Promise.all([
-        fetch("/api/workers"),
-        fetch(`/api/attendance?date=${selectedDate}`),
-      ]);
-
-      if (workersRes.ok) {
-        const workersData = await workersRes.json();
-        setWorkers(workersData.filter((w: Worker) => w.active === 1));
-      }
-
-      if (attendanceRes.ok) {
-        const attendanceData = await attendanceRes.json();
-        const attendanceMap = new Map();
-        attendanceData.forEach((record: AttendanceRecord) => {
-          attendanceMap.set(record.worker_id, record);
-        });
-        setAttendance(attendanceMap);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStatusChange = (
-    workerId: number,
-    status: string,
-    isCheckIn: boolean = false,
-    shiftAmount: number = 1.0
-  ) => {
-    const existing = attendance.get(workerId) || changes.get(workerId);
-    const updated: AttendanceRecord = {
-      id: existing?.id || 0,
-      worker_id: workerId,
-      work_date: selectedDate,
-      status: status,
-      check_in: isCheckIn
-        ? getCurrentTime()
-        : existing?.check_in || null,
-      check_out: existing?.check_out || null,
-      shift_amount: shiftAmount,
-    };
-
-    const newChanges = new Map(changes);
-    newChanges.set(workerId, updated);
-    setChanges(newChanges);
-  };
-
-  const handleCheckOut = (workerId: number) => {
-    const existing = attendance.get(workerId) || changes.get(workerId);
-    const updated: AttendanceRecord = {
-      id: existing?.id || 0,
-      worker_id: workerId,
-      work_date: selectedDate,
-      status: existing?.status || "present",
-      check_in: existing?.check_in || null,
-      check_out: getCurrentTime(),
-      shift_amount: existing?.shift_amount || 1.0,
-    };
-
-    const newChanges = new Map(changes);
-    newChanges.set(workerId, updated);
-    setChanges(newChanges);
-  };
-
-  const handleTimeChange = (workerId: number, field: 'check_in' | 'check_out', time: string) => {
-    const existing = attendance.get(workerId) || changes.get(workerId);
-    const updated: AttendanceRecord = {
-      id: existing?.id || 0,
-      worker_id: workerId,
-      work_date: selectedDate,
-      status: existing?.status || "present",
-      check_in: field === 'check_in' ? time : (existing?.check_in || null),
-      check_out: field === 'check_out' ? time : (existing?.check_out || null),
-      shift_amount: existing?.shift_amount || 1.0,
-    };
-
-    const newChanges = new Map(changes);
-    newChanges.set(workerId, updated);
-    setChanges(newChanges);
-  };
 
   const handleBatchMark = async (teamName: string, status: string) => {
     setBatchMarking(teamName);
@@ -265,92 +148,12 @@ export default function HomePage() {
     }
   };
 
-  const saveAll = async () => {
-    if (changes.size === 0) {
-      setToast({ message: vi.common.noChanges });
-      return;
-    }
-
-    setSaving(true);
-    let saved = 0;
-    let failed = 0;
-
-    for (const [workerId, record] of changes) {
-      try {
-        const response = await fetch("/api/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            workerId: record.worker_id,
-            workDate: record.work_date,
-            status: record.status || "present",
-            checkIn: record.check_in,
-            checkOut: record.check_out,
-            shiftAmount: record.shift_amount || 1.0,
-          }),
-        });
-
-        if (response.ok) {
-          const savedRecord = await response.json();
-          const newAttendance = new Map(attendance);
-          newAttendance.set(workerId, savedRecord);
-          setAttendance(newAttendance);
-          saved++;
-
-          // Remove from offline queue if it was there
-          removeFromQueue(workerId);
-        } else {
-          throw new Error("Failed to save");
-        }
-      } catch (error) {
-        console.error("Error saving record:", error);
-        failed++;
-
-        if (!isOnline) {
-          // Add to offline queue
-          const record = changes.get(workerId);
-          if (record) {
-            addToQueue({
-              workerId: record.worker_id,
-              workDate: record.work_date,
-              status: record.status || "present",
-              checkIn: record.check_in,
-              checkOut: record.check_out,
-              shiftAmount: record.shift_amount || 1.0,
-            });
-          }
-        }
-      }
-    }
-
-    setChanges(new Map());
-    setSaving(false);
-
-    if (failed > 0 && !isOnline) {
-      setToast({
-        message: vi.common.savedQueued.replace("{saved}", saved.toString()).replace("{failed}", failed.toString()),
-        offline: true,
-      });
-    } else if (saved > 0) {
-      setToast({ message: vi.common.savedSuccess.replace("{count}", saved.toString()) });
-    }
-
-    if (failed > 0 && isOnline) {
-      setToast({ message: vi.common.saveFailed.replace("{count}", failed.toString()) });
-    }
-  };
-
-  const handleDateChange = (date: string) => {
-    setSelectedDate(date);
-    setChanges(new Map()); // Clear unsaved changes when changing date
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="text-4xl mb-3">⏳</div>
-          <p className="text-gray-600 font-medium">{vi.common.loading}...</p>
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center animate-pulse">
+          <div className="text-5xl mb-4">⏳</div>
+          <p className="text-text-secondary font-medium text-lg">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -361,99 +164,118 @@ export default function HomePage() {
       {/* Offline Indicator */}
       <OfflineIndicator />
 
-      <div className="space-y-4 pb-28 lg:pb-8 bg-beige-50 min-h-screen p-4 lg:p-6 xl:p-8">
-        {/* Quick Stats Widget - Desktop only */}
-        <div className="hidden lg:block">
-          <QuickStatsWidget />
-        </div>
-
-        {/* Date Header */}
-        <DateHeader
-          selectedDate={selectedDate}
-          onDateChange={handleDateChange}
-        />
-
-        {/* Team Filter / Search + View Mode Toggle */}
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
-          <div className="flex-1">
-            <TeamFilter
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onExpandAll={() => setExpandedTeams(new Set(filteredTeams.keys()))}
-              onCollapseAll={() => setExpandedTeams(new Set())}
-            />
+      <div className="min-h-screen bg-background pb-32 lg:pb-12">
+        <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6">
+          {/* Header Section */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-stretch">
+            {/* Date Header */}
+            <div className="w-full lg:w-auto lg:flex-1">
+              <DateHeader
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+              />
+            </div>
+            
+            {/* Quick Stats Widget - Desktop only */}
+            <div className="hidden lg:block lg:flex-[2]">
+              <QuickStatsWidget />
+            </div>
           </div>
 
-          {/* View Mode Toggle - Desktop only */}
-          <div className="hidden lg:flex gap-2 bg-white rounded-lg p-1 shadow-md">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
-                viewMode === "table"
-                  ? "bg-accent text-white shadow-md"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              📊 Bảng
-            </button>
-            <button
-              onClick={() => setViewMode("card")}
-              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
-                viewMode === "card"
-                  ? "bg-accent text-white shadow-md"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              📇 Thẻ
-            </button>
-          </div>
-        </div>
+          {/* Controls Section */}
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between sticky top-0 z-30 bg-background/95 backdrop-blur-sm py-2 lg:py-4 -mx-4 px-4 lg:mx-0 lg:px-0 border-b border-gray-100 lg:border-none">
+            <div className="flex-1 w-full lg:max-w-md">
+              <TeamFilter
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onExpandAll={() => setExpandedTeams(new Set(filteredTeams.keys()))}
+                onCollapseAll={() => setExpandedTeams(new Set())}
+              />
+            </div>
 
-        {/* Table View (Desktop) */}
-        {viewMode === "table" && (
-          <div className="hidden lg:block">
-            <AttendanceTable
-              workers={workers}
-              attendance={attendance}
-              changes={changes}
-              onStatusChange={handleStatusChange}
-              onCheckOut={handleCheckOut}
-              onTimeChange={handleTimeChange}
-              searchQuery={searchQuery}
-            />
+            {/* View Mode Toggle - Desktop only */}
+            <div className="hidden lg:flex gap-1 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  viewMode === "table"
+                    ? "bg-primary-500 text-white shadow-sm"
+                    : "text-text-secondary hover:bg-gray-50"
+                }`}
+              >
+                <List className="w-4 h-4" />
+                Bảng
+              </button>
+              <button
+                onClick={() => setViewMode("card")}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  viewMode === "card"
+                    ? "bg-primary-500 text-white shadow-sm"
+                    : "text-text-secondary hover:bg-gray-50"
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Thẻ
+              </button>
+            </div>
           </div>
-        )}
 
-        {/* Card View (Mobile + Desktop option) */}
-        <div className={viewMode === "table" ? "lg:hidden" : ""}>
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 xl:gap-4">
-            {filteredTeams.size === 0 ? (
-              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 text-center xl:col-span-2">
-                <div className="text-3xl mb-2">🔍</div>
-                <p className="text-yellow-800 font-medium">
-                  {searchQuery
-                    ? `Không tìm thấy tổ hoặc nhân viên phù hợp với "${searchQuery}"`
-                    : "Không có tổ nào"}
-                </p>
-              </div>
-            ) : (
-              Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => (
-                <TeamSection
-                  key={team}
-                  teamName={team}
-                  workers={teamWorkers}
-                  attendance={attendance}
-                  changes={changes}
-                  isExpanded={expandedTeams.has(team)}
-                  onToggleExpand={() => toggleTeamExpanded(team)}
-                  onStatusChange={handleStatusChange}
-                  onCheckOut={handleCheckOut}
-                  onTimeChange={handleTimeChange}
-                  onBatchMark={handleBatchMark}
-                  batchMarking={batchMarking}
-                />
-              ))
-            )}
+          {/* Table View (Desktop) */}
+          {viewMode === "table" && (
+            <div className="hidden lg:block animate-fadeIn">
+              <AttendanceTable
+                workers={workers}
+                attendance={attendance}
+                changes={changes}
+                onStatusChange={handleStatusChange}
+                onCheckOut={handleCheckOut}
+                onTimeChange={handleTimeChange}
+                searchQuery={searchQuery}
+              />
+            </div>
+          )}
+
+          {/* Card View (Mobile + Desktop option) */}
+          <div className={`${viewMode === "table" ? "lg:hidden" : ""} animate-fadeIn`}>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
+              {filteredTeams.size === 0 ? (
+                <div className="bg-surface-highlight border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center xl:col-span-2 flex flex-col items-center justify-center min-h-[200px]">
+                  <div className="bg-white p-4 rounded-full shadow-sm mb-4">
+                    <Search className="w-8 h-8 text-text-muted" />
+                  </div>
+                  <p className="text-text-secondary font-medium text-lg">
+                    {searchQuery
+                      ? `Không tìm thấy kết quả cho "${searchQuery}"`
+                      : "Không có dữ liệu tổ"}
+                  </p>
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")}
+                      className="mt-2 text-primary-600 hover:text-primary-700 font-medium text-sm"
+                    >
+                      Xóa tìm kiếm
+                    </button>
+                  )}
+                </div>
+              ) : (
+                Array.from(filteredTeams.entries()).map(([team, teamWorkers]) => (
+                  <TeamSection
+                    key={team}
+                    teamName={team}
+                    workers={teamWorkers}
+                    attendance={attendance}
+                    changes={changes}
+                    isExpanded={expandedTeams.has(team)}
+                    onToggleExpand={() => toggleTeamExpanded(team)}
+                    onStatusChange={handleStatusChange}
+                    onCheckOut={handleCheckOut}
+                    onTimeChange={handleTimeChange}
+                    onBatchMark={handleBatchMark}
+                    batchMarking={batchMarking}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Users, UserCheck, UserX, Briefcase } from "lucide-react";
 
 interface StatsData {
   totalWorkers: number;
@@ -58,14 +59,15 @@ export default function QuickStatsWidget() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="bg-white rounded-xl shadow-md p-6 animate-pulse"
+            className="bg-white rounded-2xl shadow-soft p-5 animate-pulse border border-gray-100"
           >
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-10 w-10 bg-gray-100 rounded-lg mb-4"></div>
+            <div className="h-8 bg-gray-100 rounded w-1/2 mb-2"></div>
+            <div className="h-4 bg-gray-100 rounded w-1/3"></div>
           </div>
         ))}
       </div>
@@ -83,71 +85,79 @@ export default function QuickStatsWidget() {
       label: "Nhân viên",
       value: stats.activeWorkers,
       total: stats.totalWorkers,
-      icon: "👥",
-      color: "bg-blue-500",
+      icon: Users,
+      color: "text-blue-500",
+      bg: "bg-blue-50",
       subtitle: `${stats.totalWorkers} tổng`,
     },
     {
       label: "Có mặt hôm nay",
       value: stats.todayPresent,
       percentage: `${attendanceRate}%`,
-      icon: "✅",
-      color: "bg-green-500",
-      subtitle: `${attendanceRate}% attendance`,
+      icon: UserCheck,
+      color: "text-green-500",
+      bg: "bg-green-50",
+      subtitle: `${attendanceRate}% tỷ lệ`,
     },
     {
       label: "Vắng mặt",
       value: stats.todayAbsent,
-      icon: "❌",
-      color: "bg-red-500",
+      icon: UserX,
+      color: "text-red-500",
+      bg: "bg-red-50",
       subtitle: `${stats.todayTotal} đã chấm`,
     },
     {
-      label: "Phép",
+      label: "Nghỉ phép",
       value: stats.todayLeave,
-      icon: "🏖️",
-      color: "bg-orange-500",
+      icon: Briefcase,
+      color: "text-orange-500",
+      bg: "bg-orange-50",
       subtitle: "Hôm nay",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {statCards.map((card, index) => (
-        <div
-          key={index}
-          className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 border-l-4"
-          style={{ borderLeftColor: card.color.replace("bg-", "").replace("-500", "") }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-3xl" aria-hidden="true">
-              {card.icon}
-            </span>
-            {card.percentage && (
-              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                {card.percentage}
-              </span>
-            )}
-          </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
+      {statCards.map((card, index) => {
+        const Icon = card.icon;
+        return (
+          <div
+            key={index}
+            className="bg-white rounded-2xl shadow-soft hover:shadow-card-hover transition-all p-5 border border-gray-100 flex flex-col justify-between group"
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-3 rounded-xl ${card.bg} ${card.color} transition-transform group-hover:scale-110`}>
+                <Icon className="w-6 h-6" />
+              </div>
+              {card.percentage && (
+                <span className="text-xs font-bold text-success bg-success/10 px-2 py-1 rounded-lg border border-success/20">
+                  {card.percentage}
+                </span>
+              )}
+            </div>
 
-          <div className="text-3xl font-bold text-gray-900 mb-1">
-            {card.value}
-            {card.total && (
-              <span className="text-lg text-gray-400 ml-1">
-                / {card.total}
-              </span>
-            )}
-          </div>
+            <div>
+              <div className="text-2xl font-bold text-text-primary mb-1 flex items-baseline gap-1">
+                {card.value}
+                {card.total && (
+                  <span className="text-sm text-text-muted font-normal">
+                    / {card.total}
+                  </span>
+                )}
+              </div>
 
-          <div className="text-sm font-medium text-gray-600">
-            {card.label}
+              <div className="text-sm font-medium text-text-secondary">
+                {card.label}
+              </div>
+              
+              <div className="text-xs text-text-muted mt-1">
+                {card.subtitle}
+              </div>
+            </div>
           </div>
-
-          <div className="text-xs text-gray-500 mt-2">
-            {card.subtitle}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

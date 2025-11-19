@@ -5,6 +5,23 @@ import Toast from "@/components/Toast";
 import WorkersTable from "@/components/WorkersTable";
 import WorkerEditModal from "@/components/WorkerEditModal";
 import { vi } from "@/lib/i18n";
+import { 
+  Plus, 
+  Upload, 
+  Download, 
+  FileDown, 
+  Search, 
+  LayoutGrid, 
+  List,
+  X,
+  User,
+  Phone,
+  Briefcase,
+  CheckCircle2,
+  XCircle,
+  Edit2,
+  Trash2
+} from "lucide-react";
 
 interface Worker {
   id: number;
@@ -244,55 +261,121 @@ export default function WorkersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-600">{vi.common.loading}...</p>
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="text-center animate-pulse">
+          <div className="text-5xl mb-4">⏳</div>
+          <p className="text-text-secondary font-medium text-lg">{vi.common.loading}...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 p-4 lg:p-6 xl:p-8">
-      <div className="bg-white rounded-xl shadow-md p-4 lg:p-6">
-        <h2 className="text-2xl lg:text-3xl font-bold text-primary mb-4 lg:mb-6">{vi.workers.title}</h2>
+    <div className="min-h-screen bg-background pb-32 lg:pb-12">
+      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">{vi.workers.title}</h1>
+            <p className="text-text-secondary mt-1">Quản lý danh sách nhân viên và thông tin chi tiết</p>
+          </div>
+          
+          <div className="flex gap-2 w-full lg:w-auto">
+            <button
+              onClick={handleAddNew}
+              className="flex-1 lg:flex-none bg-primary-500 hover:bg-primary-600 text-white px-4 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              {vi.workers.add}
+            </button>
+          </div>
+        </div>
 
-        {/* Action buttons - responsive grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-4 lg:mb-6">
-          <button
-            onClick={handleAddNew}
-            className="bg-accent hover:bg-blue-600 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
-          >
-            {vi.workers.add}
-          </button>
+        {/* Controls Bar */}
+        <div className="bg-white rounded-2xl shadow-soft p-4 flex flex-col lg:flex-row gap-4 items-center sticky top-0 z-30 border border-gray-100">
+          {/* Search */}
+          <div className="relative flex-1 w-full">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-text-muted" />
+            </div>
+            <input
+              type="text"
+              placeholder="Tìm theo tên, mã NV, bộ phận, SĐT..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-text-primary"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={saving}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition disabled:opacity-50 text-base lg:text-lg"
-          >
-            {vi.workers.import}
-          </button>
+          {/* Actions Group */}
+          <div className="flex gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={saving}
+              className="px-4 py-2.5 bg-surface-highlight text-primary-700 hover:bg-primary-100 rounded-xl font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <Upload className="w-4 h-4" />
+              {vi.workers.import}
+            </button>
 
-          <button
-            onClick={() => {
-              const a = document.createElement("a");
-              a.href = "/api/workers/template";
-              a.download = `mau_danh_sach_nhan_vien_${new Date().toISOString().split("T")[0]}.xlsx`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
-            title="Tải file mẫu Excel để nhập"
-          >
-            📥 {vi.workers.downloadTemplate || "Tải mẫu"}
-          </button>
+            <button
+              onClick={() => {
+                const a = document.createElement("a");
+                a.href = "/api/workers/template";
+                a.download = `mau_danh_sach_nhan_vien_${new Date().toISOString().split("T")[0]}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
+              className="px-4 py-2.5 bg-surface-highlight text-primary-700 hover:bg-primary-100 rounded-xl font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+              title="Tải file mẫu Excel"
+            >
+              <FileDown className="w-4 h-4" />
+              Mẫu
+            </button>
 
-          <button
-            onClick={handleExport}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg col-span-2 lg:col-span-1"
-          >
-            {vi.workers.export}
-          </button>
+            <button
+              onClick={handleExport}
+              className="px-4 py-2.5 bg-surface-highlight text-primary-700 hover:bg-primary-100 rounded-xl font-medium transition-colors flex items-center gap-2 whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              {vi.workers.export}
+            </button>
+            
+            <div className="w-px h-8 bg-gray-200 mx-1 hidden lg:block"></div>
+
+            {/* View Mode Toggle */}
+            <div className="flex bg-gray-100 p-1 rounded-xl">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "table"
+                    ? "bg-white text-primary-600 shadow-sm"
+                    : "text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                <List className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "card"
+                    ? "bg-white text-primary-600 shadow-sm"
+                    : "text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
           <input
             ref={fileInputRef}
@@ -303,311 +386,215 @@ export default function WorkersPage() {
           />
         </div>
 
-        {/* Search Bar + View Mode Toggle */}
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-center mb-4 lg:mb-6">
-          {/* Search Input */}
-          <div className="flex-1">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="🔍 Tìm theo tên, mã NV, bộ phận, SĐT..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 lg:px-5 py-3 lg:py-3.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-base lg:text-lg"
+        {/* Table View (Desktop) */}
+        {viewMode === "table" && (
+          <div className="hidden lg:block animate-fadeIn">
+            <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+              <WorkersTable
+                workers={workers}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                searchQuery={searchQuery}
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl"
-                >
-                  ✕
-                </button>
-              )}
             </div>
           </div>
+        )}
 
-          {/* View Mode Toggle - Desktop only */}
-          <div className="hidden lg:flex gap-2 bg-white rounded-lg p-1 shadow-md border border-gray-200">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
-                viewMode === "table"
-                  ? "bg-accent text-white shadow-md"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              📊 Bảng
-            </button>
-            <button
-              onClick={() => setViewMode("card")}
-              className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
-                viewMode === "card"
-                  ? "bg-accent text-white shadow-md"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              📇 Thẻ
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Table View (Desktop) */}
-      {viewMode === "table" && (
-        <div className="hidden lg:block">
-          <WorkersTable
-            workers={workers}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            searchQuery={searchQuery}
-          />
-        </div>
-      )}
-
-      {/* Card View (Mobile + Desktop option) */}
-      <div className={viewMode === "table" ? "lg:hidden" : ""}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 lg:gap-4">
-          {workers.length === 0 ? (
-            <div className="text-center py-8 text-gray-600 lg:col-span-2 xl:col-span-3">
-              {vi.workers.emptyState}
-            </div>
-          ) : (
-            workers
-              .filter((worker) => {
-                if (!searchQuery) return true;
-                const query = searchQuery.toLowerCase();
-                return (
-                  worker.name.toLowerCase().includes(query) ||
-                  worker.code.toLowerCase().includes(query) ||
-                  (worker.team || "").toLowerCase().includes(query) ||
-                  (worker.phone || "").toLowerCase().includes(query)
-                );
-              })
-              .map((worker) => (
-                <div
-                  key={worker.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4 lg:p-5 flex flex-col gap-3"
-                >
-                  <div className="flex-1">
-                    <p className="font-bold text-base lg:text-lg">{worker.name}</p>
-                    <p className="text-sm lg:text-base text-gray-600">
-                      {worker.code} | {worker.team || vi.workers.noTeam}
-                    </p>
-                    {worker.phone && (
-                      <p className="text-sm lg:text-base text-gray-600">{worker.phone}</p>
-                    )}
-                    <div className="mt-2">
+        {/* Card View (Mobile + Desktop option) */}
+        <div className={`${viewMode === "table" ? "lg:hidden" : ""} animate-fadeIn`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {workers.length === 0 ? (
+              <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="w-8 h-8 text-text-muted" />
+                </div>
+                <p className="text-text-secondary font-medium">{vi.workers.emptyState}</p>
+              </div>
+            ) : (
+              workers
+                .filter((worker) => {
+                  if (!searchQuery) return true;
+                  const query = searchQuery.toLowerCase();
+                  return (
+                    worker.name.toLowerCase().includes(query) ||
+                    worker.code.toLowerCase().includes(query) ||
+                    (worker.team || "").toLowerCase().includes(query) ||
+                    (worker.phone || "").toLowerCase().includes(query)
+                  );
+                })
+                .map((worker) => (
+                  <div
+                    key={worker.id}
+                    className="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 p-5 border border-gray-100 group"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold text-lg">
+                          {worker.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-text-primary text-lg">{worker.name}</h3>
+                          <p className="text-sm text-text-muted font-medium">{worker.code}</p>
+                        </div>
+                      </div>
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
+                        className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${
                           worker.active === 1
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-success/10 text-success border-success/20"
+                            : "bg-error/10 text-error border-error/20"
                         }`}
                       >
-                        {worker.active === 1 ? "✅ Đang làm" : "❌ Đã nghỉ"}
+                        {worker.active === 1 ? (
+                          <><CheckCircle2 className="w-3 h-3 mr-1" /> Đang làm</>
+                        ) : (
+                          <><XCircle className="w-3 h-3 mr-1" /> Đã nghỉ</>
+                        )}
                       </span>
                     </div>
-                  </div>
 
-                  {/* Action buttons - responsive */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(worker)}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
-                    >
-                      {vi.common.edit}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(worker.id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 lg:py-2.5 rounded-lg font-semibold transition text-base lg:text-lg"
-                    >
-                      {vi.common.delete}
-                    </button>
+                    <div className="space-y-2 mb-5">
+                      <div className="flex items-center gap-2 text-sm text-text-secondary">
+                        <Briefcase className="w-4 h-4 text-text-muted" />
+                        <span>{worker.team || vi.workers.noTeam}</span>
+                      </div>
+                      {worker.phone && (
+                        <div className="flex items-center gap-2 text-sm text-text-secondary">
+                          <Phone className="w-4 h-4 text-text-muted" />
+                          <span>{worker.phone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-4 border-t border-gray-50">
+                      <button
+                        onClick={() => handleEdit(worker)}
+                        className="flex-1 bg-surface-highlight hover:bg-primary-100 text-primary-700 py-2 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        {vi.common.edit}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(worker.id)}
+                        className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {vi.common.delete}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
-          )}
+                ))
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Import Preview Modal */}
-      {importPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-primary mb-4">
-                Xác nhận ánh xạ cột
-              </h3>
-
-              <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
-                <p className="text-sm text-blue-800">
-                  File có {importPreview.totalRows} hàng. Hệ thống đã tự động phát hiện ánh xạ cột sau:
-                </p>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Mã NV (Code):
-                  </label>
-                  <select
-                    value={importPreview.mapping.code || ""}
-                    onChange={(e) =>
-                      setImportPreview({
-                        ...importPreview,
-                        mapping: {
-                          ...importPreview.mapping,
-                          code: e.target.value || null,
-                        },
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+        {/* Import Preview Modal */}
+        {importPreview && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scaleIn">
+              <div className="p-6 lg:p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-text-primary">
+                    Xác nhận ánh xạ cột
+                  </h3>
+                  <button 
+                    onClick={() => setImportPreview(null)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    <option value="">-- Không chọn --</option>
-                    {importPreview.headers.map((header) => (
-                      <option key={header} value={header}>
-                        {header}
-                      </option>
-                    ))}
-                  </select>
+                    <X className="w-6 h-6 text-text-muted" />
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Họ tên (Name):
-                  </label>
-                  <select
-                    value={importPreview.mapping.name || ""}
-                    onChange={(e) =>
-                      setImportPreview({
-                        ...importPreview,
-                        mapping: {
-                          ...importPreview.mapping,
-                          name: e.target.value || null,
-                        },
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  >
-                    <option value="">-- Không chọn --</option>
-                    {importPreview.headers.map((header) => (
-                      <option key={header} value={header}>
-                        {header}
-                      </option>
-                    ))}
-                  </select>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <List className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-800 font-medium">
+                      File có {importPreview.totalRows} hàng.
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Hệ thống đã tự động phát hiện ánh xạ cột. Vui lòng kiểm tra lại.
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Điện thoại (Phone):
-                  </label>
-                  <select
-                    value={importPreview.mapping.phone || ""}
-                    onChange={(e) =>
-                      setImportPreview({
-                        ...importPreview,
-                        mapping: {
-                          ...importPreview.mapping,
-                          phone: e.target.value || null,
-                        },
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  >
-                    <option value="">-- Không chọn --</option>
-                    {importPreview.headers.map((header) => (
-                      <option key={header} value={header}>
-                        {header}
-                      </option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  {[
+                    { label: "Mã NV (Code)", key: "code" },
+                    { label: "Họ tên (Name)", key: "name" },
+                    { label: "Điện thoại (Phone)", key: "phone" },
+                    { label: "Bộ phận (Team)", key: "team" },
+                    { label: "Trạng thái (Active)", key: "active" },
+                  ].map((field) => (
+                    <div key={field.key}>
+                      <label className="block text-sm font-semibold text-text-secondary mb-2">
+                        {field.label}
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={(importPreview.mapping as any)[field.key] || ""}
+                          onChange={(e) =>
+                            setImportPreview({
+                              ...importPreview,
+                              mapping: {
+                                ...importPreview.mapping,
+                                [field.key]: e.target.value || null,
+                              },
+                            })
+                          }
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 appearance-none text-sm font-medium"
+                        >
+                          <option value="">-- Không chọn --</option>
+                          {importPreview.headers.map((header) => (
+                            <option key={header} value={header}>
+                              {header}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Bộ phận (Team):
-                  </label>
-                  <select
-                    value={importPreview.mapping.team || ""}
-                    onChange={(e) =>
-                      setImportPreview({
-                        ...importPreview,
-                        mapping: {
-                          ...importPreview.mapping,
-                          team: e.target.value || null,
-                        },
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                <div className="flex gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => setImportPreview(null)}
+                    className="flex-1 px-6 py-3 border border-gray-200 text-text-secondary rounded-xl font-bold hover:bg-gray-50 transition-colors"
                   >
-                    <option value="">-- Không chọn --</option>
-                    {importPreview.headers.map((header) => (
-                      <option key={header} value={header}>
-                        {header}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Trạng thái (Active):
-                  </label>
-                  <select
-                    value={importPreview.mapping.active || ""}
-                    onChange={(e) =>
-                      setImportPreview({
-                        ...importPreview,
-                        mapping: {
-                          ...importPreview.mapping,
-                          active: e.target.value || null,
-                        },
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    {vi.common.cancel}
+                  </button>
+                  <button
+                    onClick={handleConfirmImport}
+                    disabled={saving || !importPreview.mapping.code || !importPreview.mapping.name}
+                    className="flex-1 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                   >
-                    <option value="">-- Không chọn --</option>
-                    {importPreview.headers.map((header) => (
-                      <option key={header} value={header}>
-                        {header}
-                      </option>
-                    ))}
-                  </select>
+                    {saving ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Đang nhập...
+                      </span>
+                    ) : "Xác nhận & Nhập"}
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setImportPreview(null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded font-semibold hover:bg-gray-50 transition"
-                >
-                  {vi.common.cancel}
-                </button>
-                <button
-                  onClick={handleConfirmImport}
-                  disabled={saving || !importPreview.mapping.code || !importPreview.mapping.name}
-                  className="flex-1 px-4 py-2 bg-accent hover:bg-blue-600 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? "Đang nhập..." : "Xác nhận & Nhập"}
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Worker Edit/Add Modal */}
-      <WorkerEditModal
-        isOpen={modalOpen}
-        worker={editingWorker}
-        onClose={handleCloseModal}
-        onSave={handleSaveWorker}
-        saving={saving}
-      />
+        {/* Worker Edit/Add Modal */}
+        <WorkerEditModal
+          isOpen={modalOpen}
+          worker={editingWorker}
+          onClose={handleCloseModal}
+          onSave={handleSaveWorker}
+          saving={saving}
+        />
 
-      {toast && <Toast message={toast} />}
+        {toast && <Toast message={toast} />}
+      </div>
     </div>
   );
 }

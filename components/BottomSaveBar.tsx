@@ -1,5 +1,7 @@
 "use client";
 
+import { Save, Loader2, AlertCircle } from "lucide-react";
+
 interface BottomSaveBarProps {
   visible: boolean;
   changeCount: number;
@@ -19,31 +21,36 @@ export default function BottomSaveBar({
 
   return (
     <div
-      className={`fixed lg:sticky bottom-0 lg:bottom-auto left-0 right-0 bg-white border-t-2 border-gray-200 p-4 lg:p-6 shadow-2xl lg:shadow-md z-50 transition-all lg:rounded-xl lg:mt-4 ${className}`}
+      className={`fixed bottom-0 left-0 right-0 lg:left-auto lg:right-auto lg:fixed lg:bottom-8 lg:left-1/2 lg:-translate-x-1/2 z-50 transition-all duration-300 animate-slideUp ${className}`}
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="bg-white border border-gray-200 shadow-2xl rounded-t-2xl lg:rounded-2xl p-4 lg:p-3 lg:pr-6 flex flex-col lg:flex-row items-center gap-4 lg:gap-6 min-w-[320px] lg:min-w-[400px]">
+        <div className="flex items-center gap-3 flex-1 w-full lg:w-auto">
+          <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center shrink-0">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-text-primary text-sm">Thay đổi chưa lưu</p>
+            <p className="text-xs text-text-secondary">{changeCount} thay đổi đang chờ</p>
+          </div>
+        </div>
+
         <button
           onClick={onSave}
           disabled={saving}
-          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white font-bold py-4 lg:py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg lg:text-base shadow-lg flex items-center justify-center gap-2"
+          className="w-full lg:w-auto bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2 whitespace-nowrap"
         >
           {saving ? (
             <>
-              <span className="animate-spin">⏳</span>
+              <Loader2 className="w-5 h-5 animate-spin" />
               <span>Đang lưu...</span>
             </>
           ) : (
             <>
-              <span>💾</span>
-              <span>Lưu tất cả ({changeCount} thay đổi)</span>
+              <Save className="w-5 h-5" />
+              <span>Lưu thay đổi</span>
             </>
           )}
         </button>
-
-        {/* Unsaved Changes Warning */}
-        <p className="text-center text-xs lg:text-sm text-gray-600 mt-2">
-          {changeCount} thay đổi chưa lưu
-        </p>
       </div>
     </div>
   );

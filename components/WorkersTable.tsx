@@ -5,6 +5,7 @@ import { vi } from "@/lib/i18n";
 import SortableTableHeader from "./TableEnhancements/SortableTableHeader";
 import Pagination from "./TableEnhancements/Pagination";
 import ColumnVisibilityToggle from "./TableEnhancements/ColumnVisibilityToggle";
+import { Edit2, Trash2, Search, Filter, CheckCircle2, XCircle } from "lucide-react";
 
 interface Worker {
   id: number;
@@ -154,15 +155,16 @@ export default function WorkersTable({
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-card overflow-hidden border border-gray-100">
       {/* Filters */}
-      <div className="p-4 bg-beige-50 border-b flex flex-wrap gap-3 items-center">
-        <div className="flex items-center gap-2">
-          <label className="font-semibold text-sm text-gray-700">Bộ phận:</label>
+      <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-wrap gap-4 items-center">
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
+          <Filter className="w-4 h-4 text-text-muted" />
+          <label className="font-medium text-sm text-text-secondary">Bộ phận:</label>
           <select
             value={filterTeam}
             onChange={(e) => setFilterTeam(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className="bg-transparent border-none text-sm font-medium text-text-primary focus:ring-0 cursor-pointer"
           >
             <option value="all">Tất cả</option>
             {teams.map((team) => (
@@ -173,16 +175,17 @@ export default function WorkersTable({
           </select>
         </div>
 
-        <div className="flex items-center gap-2">
-          <label className="font-semibold text-sm text-gray-700">Trạng thái:</label>
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
+          <Filter className="w-4 h-4 text-text-muted" />
+          <label className="font-medium text-sm text-text-secondary">Trạng thái:</label>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className="bg-transparent border-none text-sm font-medium text-text-primary focus:ring-0 cursor-pointer"
           >
             <option value="all">Tất cả</option>
-            <option value="active">✅ Đang làm</option>
-            <option value="inactive">❌ Đã nghỉ</option>
+            <option value="active">Đang làm</option>
+            <option value="inactive">Đã nghỉ</option>
           </select>
         </div>
 
@@ -191,18 +194,18 @@ export default function WorkersTable({
         {/* Column Visibility Toggle */}
         <ColumnVisibilityToggle columns={columns} onToggle={handleColumnToggle} />
 
-        <div className="text-sm text-gray-600 font-medium">
-          Hiển thị: <span className="text-accent font-bold">{sortedWorkers.length}</span> / {workers.length} nhân viên
+        <div className="text-sm text-text-secondary font-medium bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-sm">
+          Hiển thị: <span className="text-primary-600 font-bold">{sortedWorkers.length}</span> / {workers.length} nhân viên
         </div>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gradient-to-r from-warm-dark to-warm-dark/90 text-white">
-            <tr>
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
               {columnVisibility.stt && (
-                <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wider w-12">
+                <th className="px-4 py-3 text-left text-xs font-bold text-text-muted uppercase tracking-wider w-12">
                   STT
                 </th>
               )}
@@ -253,18 +256,20 @@ export default function WorkersTable({
                 />
               )}
               {columnVisibility.actions && (
-                <th className="px-3 py-3 text-center text-xs font-bold uppercase tracking-wider w-40">
+                <th className="px-4 py-3 text-center text-xs font-bold text-text-muted uppercase tracking-wider w-32">
                   Hành động
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-gray-50">
             {paginatedWorkers.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                  <div className="text-3xl mb-2">🔍</div>
-                  <p>
+                <td colSpan={7} className="px-6 py-12 text-center text-text-muted">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-300" />
+                  </div>
+                  <p className="font-medium">
                     {searchQuery || filterTeam !== "all" || filterStatus !== "all"
                       ? "Không tìm thấy nhân viên phù hợp"
                       : vi.workers.emptyState}
@@ -275,59 +280,67 @@ export default function WorkersTable({
               paginatedWorkers.map((worker, index) => {
                 const absoluteIndex = (currentPage - 1) * itemsPerPage + index + 1;
                 return (
-                <tr key={worker.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={worker.id} className="hover:bg-primary-50/30 transition-colors group">
                   {columnVisibility.stt && (
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                       {absoluteIndex}
                     </td>
                   )}
                   {columnVisibility.code && (
-                    <td className="px-3 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-text-primary">
                       {worker.code}
                     </td>
                   )}
                   {columnVisibility.name && (
-                    <td className="px-3 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-text-primary">
                       {worker.name}
                     </td>
                   )}
                   {columnVisibility.phone && (
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
                       {worker.phone || "---"}
                     </td>
                   )}
                   {columnVisibility.team && (
-                    <td className="px-3 py-3 whitespace-nowrap text-sm text-gray-600">
-                      {worker.team || vi.workers.noTeam}
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
+                      <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-text-secondary text-xs font-medium">
+                        {worker.team || vi.workers.noTeam}
+                      </span>
                     </td>
                   )}
                   {columnVisibility.active && (
-                    <td className="px-3 py-3 whitespace-nowrap text-center">
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                        className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${
                           worker.active === 1
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-success/10 text-success border-success/20"
+                            : "bg-error/10 text-error border-error/20"
                         }`}
                       >
-                        {worker.active === 1 ? "✅ Đang làm" : "❌ Đã nghỉ"}
+                        {worker.active === 1 ? (
+                          <><CheckCircle2 className="w-3 h-3 mr-1" /> Đang làm</>
+                        ) : (
+                          <><XCircle className="w-3 h-3 mr-1" /> Đã nghỉ</>
+                        )}
                       </span>
                     </td>
                   )}
                   {columnVisibility.actions && (
-                    <td className="px-3 py-3 whitespace-nowrap text-center">
-                      <div className="flex gap-2 justify-center">
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                      <div className="flex gap-2 justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => onEdit(worker)}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition-all shadow-sm"
+                          className="p-2 hover:bg-primary-100 text-primary-600 rounded-lg transition-colors"
+                          title={vi.common.edit}
                         >
-                          ✏️ {vi.common.edit}
+                          <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDelete(worker.id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded font-semibold text-xs transition-all shadow-sm"
+                          className="p-2 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                          title={vi.common.delete}
                         >
-                          🗑️ {vi.common.delete}
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -341,14 +354,16 @@ export default function WorkersTable({
       </div>
 
       {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={sortedWorkers.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={handleItemsPerPageChange}
-      />
+      <div className="border-t border-gray-100 bg-gray-50/50 p-4">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={sortedWorkers.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+      </div>
     </div>
   );
 }
