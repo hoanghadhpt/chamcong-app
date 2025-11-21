@@ -125,6 +125,27 @@ async function initializeSchema() {
     }
   }
 
+  // Check if workers table exists and add base_salary column if needed
+  const workersTableResult = await database.query(
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'workers'`
+  );
+
+  if (workersTableResult.rows.length > 0) {
+    const workersColumnsResult = await database.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'workers'`
+    );
+
+    const columnNames = workersColumnsResult.rows.map((row) => row.column_name);
+    const needsBaseSalary = !columnNames.includes("base_salary");
+
+    if (needsBaseSalary) {
+      console.log("Migrating workers table: adding base_salary column...");
+      await database.query("ALTER TABLE workers ADD COLUMN base_salary INTEGER DEFAULT 0;");
+    }
+  }
+
   // Check if all tables exist
   const tablesResult = await database.query(
     `SELECT table_name FROM information_schema.tables
@@ -163,6 +184,7 @@ async function initializeSchema() {
       name TEXT NOT NULL,
       phone TEXT,
       team TEXT,
+      base_salary INTEGER DEFAULT 0,
       active INTEGER DEFAULT 1,
       UNIQUE(manager_id, code)
     );

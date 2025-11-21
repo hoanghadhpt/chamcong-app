@@ -375,3 +375,11 @@ export function extractTimeFromTimestamp(timestamp: string | null): string {
 
   return "";
 }
+
+// Format currency (VND)
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
+}

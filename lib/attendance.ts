@@ -137,6 +137,59 @@ export async function upsertAttendance(
     ? `${workDate} ${checkOut}${checkOut.length === 5 ? ':00' : ''}`
     : checkOut;
 
+  // --- Automated Calculation Logic ---
+  let calculatedLate = lateMinutes;
+  let calculatedEarly = earlyMinutes;
+  let calculatedOT = ot_1_5;
+
+  // Only calculate if check-in/out are present and status is 'present'
+  if (status === 'present' && (checkInTimestamp || checkOutTimestamp)) {
+    try {
+      // 1. Determine Shift
+      let shift = null;
+      if (shiftId) {
+        const { getShiftById } = await import("./shifts");
+        shift = await getShiftById(shiftId);
+      }
+      
+      if (!shift) {
+        const { getSettingsByManagerId } = await import("./settings");
+        const settings = await getSettingsByManagerId(managerId);
+        if (settings.default_shift_id) {
+          const { getShiftById } = await import("./shifts");
+          shift = await getShiftById(settings.default_shift_id);
+        }
+      }
+
+      // 2. Calculate Metrics if shift exists
+      if (shift) {
+        const { calculateAttendanceMetrics } = await import("./calculation");
+        const metrics = calculateAttendanceMetrics(
+          checkInTimestamp,
+          checkOutTimestamp,
+          shift
+        );
+
+        // Use calculated values if not manually overridden (or if we want to force update)
+        // Here we prioritize calculated values if they are available, 
+        // but we could respect manual inputs if they are explicitly provided and different.
+        // For now, let's assume if the user provides specific values, we trust them,
+        // BUT since the frontend might send null/0, we need to be careful.
+        // Strategy: If the passed values are null/0, use calculated.
+        
+        if (lateMinutes === null) calculatedLate = metrics.lateMinutes;
+        if (earlyMinutes === null) calculatedEarly = metrics.earlyMinutes;
+        // For OT, it's a bit trickier as there are multiple types. 
+        // Let's just update OT 1.5 if it's 0.
+        if (ot_1_5 === 0) calculatedOT = metrics.otMinutes;
+      }
+    } catch (error) {
+      console.error("Error calculating attendance metrics:", error);
+      // Fallback to provided values
+    }
+  }
+  // -----------------------------------
+
   const existingResult = await db.query(
     "SELECT id FROM attendance WHERE manager_id = $1 AND worker_id = $2 AND work_date = $3",
     [managerId, workerId, workDate]
@@ -154,9 +207,9 @@ export async function upsertAttendance(
         status,
         checkInTimestamp,
         checkOutTimestamp,
-        lateMinutes,
-        earlyMinutes,
-        ot_1_5,
+        calculatedLate,
+        calculatedEarly,
+        calculatedOT,
         ot_2_0,
         ot_3_0,
         note,
@@ -183,9 +236,9 @@ export async function upsertAttendance(
         status,
         checkInTimestamp,
         checkOutTimestamp,
-        lateMinutes,
-        earlyMinutes,
-        ot_1_5,
+        calculatedLate,
+        calculatedEarly,
+        calculatedOT,
         ot_2_0,
         ot_3_0,
         note,

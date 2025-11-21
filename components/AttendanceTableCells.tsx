@@ -123,7 +123,7 @@ export function TimeCell({ time, workerId, type, status, onTimeChange, onMarkNow
     setIsEditing(false);
   };
 
-  if (status !== 'present') {
+  if (status !== 'present' && type !== 'check_in') {
     return <span className="text-text-muted text-sm">---</span>;
   }
 
@@ -199,6 +199,83 @@ export function TimeCell({ time, workerId, type, status, onTimeChange, onMarkNow
         <span className="absolute inset-0 flex items-center justify-center text-text-muted group-hover:opacity-0 transition-opacity">
           ---
         </span>
+      )}
+    </div>
+  );
+}
+
+interface ShiftCellProps {
+  shiftAmount: number;
+  status: string | null;
+  workerId: number;
+  onStatusChange: (workerId: number, status: string, isCheckIn: boolean, shiftAmount: number) => void;
+}
+
+export function ShiftCell({ shiftAmount, status, workerId, onStatusChange }: ShiftCellProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (newAmount: number) => {
+    if (status) {
+      onStatusChange(workerId, status, false, newAmount);
+    }
+    setIsOpen(false);
+  };
+
+  if (!status) {
+    return <span className="text-text-muted">---</span>;
+  }
+
+  return (
+    <div className="relative flex justify-center" ref={containerRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="font-medium text-text-primary flex items-center justify-center gap-1 hover:bg-gray-100 px-2 py-1 rounded-lg transition-colors"
+      >
+        {shiftAmount === 0.5 ? (
+          <CloudSun className="w-4 h-4 text-orange-400" />
+        ) : (
+          <Sun className="w-4 h-4 text-orange-500" />
+        )}
+        <span>{shiftAmount === 0.5 ? "0.5" : "1.0"}</span>
+        <ChevronDown className="w-3 h-3 text-gray-400" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 z-50 mt-1 w-32 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-fadeIn">
+          <div className="p-1 grid grid-cols-1 gap-0.5">
+            <button
+              onClick={() => handleSelect(1.0)}
+              className={`
+                flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                ${shiftAmount === 1.0 ? "bg-primary-50 text-primary-700" : "text-text-secondary hover:bg-gray-50"}
+              `}
+            >
+              <Sun className={`w-4 h-4 ${shiftAmount === 1.0 ? "text-primary-600" : "text-orange-500"}`} />
+              Cả ngày (1.0)
+            </button>
+            <button
+              onClick={() => handleSelect(0.5)}
+              className={`
+                flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                ${shiftAmount === 0.5 ? "bg-primary-50 text-primary-700" : "text-text-secondary hover:bg-gray-50"}
+              `}
+            >
+              <CloudSun className={`w-4 h-4 ${shiftAmount === 0.5 ? "text-primary-600" : "text-orange-400"}`} />
+              Nửa ngày (0.5)
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

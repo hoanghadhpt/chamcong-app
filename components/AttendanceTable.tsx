@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import AttendanceStatusChip from "./AttendanceStatusChip";
+import { StatusCell, TimeCell, ShiftCell } from "./AttendanceTableCells";
 import { extractTimeFromTimestamp } from "@/lib/i18n";
 import { 
   Search, 
@@ -67,6 +68,7 @@ export default function AttendanceTable({
   searchQuery = "",
 }: AttendanceTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [selectedWorkers, setSelectedWorkers] = useState<Set<number>>(new Set());
   const [filterTeam, setFilterTeam] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
@@ -109,8 +111,54 @@ export default function AttendanceTable({
     setExpandedRows(newExpanded);
   };
 
+  const toggleSelectAll = () => {
+    if (selectedWorkers.size === filteredWorkers.length) {
+      setSelectedWorkers(new Set());
+    } else {
+      setSelectedWorkers(new Set(filteredWorkers.map((w) => w.id)));
+    }
+  };
+
+  const toggleSelectRow = (workerId: number) => {
+    const newSelected = new Set(selectedWorkers);
+    if (newSelected.has(workerId)) {
+      newSelected.delete(workerId);
+    } else {
+      newSelected.add(workerId);
+    }
+    setSelectedWorkers(newSelected);
+  };
+
+  const handleBulkStatusChange = (status: string) => {
+    selectedWorkers.forEach((id) => {
+      const current = changes.get(id) || attendance.get(id);
+      onStatusChange(id, status, false, current?.shift_amount || 1.0);
+    });
+    setSelectedWorkers(new Set());
+  };
+
+  const handleBulkShiftChange = (shiftAmount: number) => {
+    selectedWorkers.forEach((id) => {
+      const current = changes.get(id) || attendance.get(id);
+      if (current?.status) {
+        onStatusChange(id, current.status, false, shiftAmount);
+      }
+    });
+    setSelectedWorkers(new Set());
+  };
+
+  const handleBulkCheckOut = () => {
+    selectedWorkers.forEach((id) => {
+      const current = changes.get(id) || attendance.get(id);
+      if (current?.status === "present") {
+        onCheckOut(id);
+      }
+    });
+    setSelectedWorkers(new Set());
+  };
+
   return (
-    <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-card border border-gray-100 overflow-hidden relative">
       {/* Filters */}
       <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-wrap gap-4">
         <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm">
@@ -156,11 +204,71 @@ export default function AttendanceTable({
         </div>
       </div>
 
+      {/* Bulk Action Bar - Top Sticky */}
+      {selectedWorkers.size > 0 && (
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-md px-4 py-3 flex items-center gap-4 animate-fadeIn">
+          <div className="font-bold text-sm whitespace-nowrap text-primary-700 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            Đã chọn {selectedWorkers.size}
+          </div>
+          <div className="h-6 w-px bg-gray-200"></div>
+          <div className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                onClick={() => handleBulkStatusChange(option.key)}
+                className="px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-text-secondary hover:text-text-primary text-xs font-medium flex items-center gap-2 transition-colors whitespace-nowrap"
+              >
+                <option.icon className={`w-3 h-3 ${option.text}`} />
+                {option.label}
+              </button>
+            ))}
+            <div className="h-6 w-px bg-gray-200 mx-2"></div>
+            <button
+              onClick={() => handleBulkShiftChange(1.0)}
+              className="px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-text-secondary hover:text-text-primary text-xs font-medium flex items-center gap-2 transition-colors whitespace-nowrap"
+            >
+              <Sun className="w-3 h-3 text-orange-500" />
+              1.0
+            </button>
+            <button
+              onClick={() => handleBulkShiftChange(0.5)}
+              className="px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-text-secondary hover:text-text-primary text-xs font-medium flex items-center gap-2 transition-colors whitespace-nowrap"
+            >
+              <CloudSun className="w-3 h-3 text-orange-400" />
+              0.5
+            </button>
+            <div className="h-6 w-px bg-gray-200 mx-2"></div>
+            <button
+              onClick={handleBulkCheckOut}
+              className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-xs font-bold flex items-center gap-2 transition-colors whitespace-nowrap"
+            >
+              <LogOut className="w-3 h-3" />
+              Chấm ra
+            </button>
+          </div>
+          <button
+            onClick={() => setSelectedWorkers(new Set())}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-600"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto pb-4">
         <table className="w-full">
-          <thead>
+          <thead className="sticky top-0 z-20 bg-white shadow-sm">
             <tr className="bg-white border-b border-gray-100">
+              <th className="px-4 py-3 w-10">
+                <input
+                  type="checkbox"
+                  checked={selectedWorkers.size === filteredWorkers.length && filteredWorkers.length > 0}
+                  onChange={toggleSelectAll}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer"
+                />
+              </th>
               <th className="px-4 py-3 text-left text-xs font-bold text-text-muted uppercase tracking-wider w-12">STT</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-text-muted uppercase tracking-wider">Mã NV</th>
               <th className="px-4 py-3 text-left text-xs font-bold text-text-muted uppercase tracking-wider">Họ tên</th>
@@ -175,7 +283,7 @@ export default function AttendanceTable({
           <tbody className="divide-y divide-gray-50">
             {filteredWorkers.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-6 py-12 text-center text-text-muted">
+                <td colSpan={10} className="px-6 py-12 text-center text-text-muted">
                   <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="w-8 h-8 text-gray-300" />
                   </div>
@@ -186,6 +294,7 @@ export default function AttendanceTable({
               filteredWorkers.map((worker, index) => {
                 const current = changes.get(worker.id) || attendance.get(worker.id);
                 const isExpanded = expandedRows.has(worker.id);
+                const isSelected = selectedWorkers.has(worker.id);
                 const showHalfDaySelector =
                   current?.status === "leave_paid" ||
                   current?.status === "leave_unpaid" ||
@@ -194,7 +303,15 @@ export default function AttendanceTable({
 
                 return (
                   <React.Fragment key={worker.id}>
-                    <tr className={`hover:bg-primary-50/30 transition-colors ${isExpanded ? "bg-primary-50/20" : ""}`}>
+                    <tr className={`hover:bg-primary-50/30 transition-colors ${isExpanded ? "bg-primary-50/20" : ""} ${isSelected ? "bg-blue-50/50" : ""}`}>
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectRow(worker.id)}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-4 py-3 text-sm text-text-secondary">
                         {index + 1}
                       </td>
@@ -210,41 +327,40 @@ export default function AttendanceTable({
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <AttendanceStatusChip status={current?.status as any} size="sm" />
+                        <StatusCell
+                          status={current?.status || null}
+                          workerId={worker.id}
+                          shiftAmount={current?.shift_amount || 1.0}
+                          onStatusChange={onStatusChange}
+                        />
                       </td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {current?.status ? (
-                          <span className="font-medium text-text-primary flex items-center justify-center gap-1">
-                            {current.shift_amount === 0.5 ? <CloudSun className="w-4 h-4 text-orange-400" /> : <Sun className="w-4 h-4 text-orange-500" />}
-                            {current.shift_amount === 0.5 ? "0.5" : "1.0"}
-                          </span>
-                        ) : (
-                          <span className="text-text-muted">---</span>
-                        )}
+                        <ShiftCell
+                          shiftAmount={current?.shift_amount || 1.0}
+                          status={current?.status || null}
+                          workerId={worker.id}
+                          onStatusChange={onStatusChange}
+                        />
                       </td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {current?.status === "present" ? (
-                          <button
-                            onClick={() => onStatusChange(worker.id, "present", true, current.shift_amount || 1.0)}
-                            className="text-green-600 hover:text-green-700 font-bold hover:underline font-mono bg-green-50 px-2 py-1 rounded border border-green-100"
-                          >
-                            {extractTimeFromTimestamp(current.check_in) || "Chấm vào"}
-                          </button>
-                        ) : (
-                          <span className="text-text-muted">---</span>
-                        )}
+                        <TimeCell
+                          time={current?.check_in || null}
+                          workerId={worker.id}
+                          type="check_in"
+                          status={current?.status || null}
+                          onTimeChange={onTimeChange}
+                          onMarkNow={() => onStatusChange(worker.id, "present", true, current?.shift_amount || 1.0)}
+                        />
                       </td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {current?.status === "present" ? (
-                          <button
-                            onClick={() => onCheckOut(worker.id)}
-                            className="text-orange-600 hover:text-orange-700 font-bold hover:underline font-mono bg-orange-50 px-2 py-1 rounded border border-orange-100"
-                          >
-                            {extractTimeFromTimestamp(current.check_out) || "Chấm ra"}
-                          </button>
-                        ) : (
-                          <span className="text-text-muted">---</span>
-                        )}
+                        <TimeCell
+                          time={current?.check_out || null}
+                          workerId={worker.id}
+                          type="check_out"
+                          status={current?.status || null}
+                          onTimeChange={onTimeChange}
+                          onMarkNow={() => onCheckOut(worker.id)}
+                        />
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
@@ -264,7 +380,7 @@ export default function AttendanceTable({
                     {/* Expanded Row - Status Actions */}
                     {isExpanded && (
                       <tr className="animate-fadeIn">
-                        <td colSpan={9} className="px-0 py-0 border-b border-gray-100">
+                        <td colSpan={10} className="px-0 py-0 border-b border-gray-100">
                           <div className="bg-gray-50/50 p-4 lg:p-6 border-t border-gray-100 shadow-inner">
                             <div className="max-w-4xl mx-auto space-y-6">
                               {/* Status Buttons */}
@@ -414,6 +530,7 @@ export default function AttendanceTable({
           </tbody>
         </table>
       </div>
+
     </div>
   );
 }

@@ -10,7 +10,8 @@ import {
   Download, 
   User, 
   LogOut,
-  Menu
+  Menu,
+  DollarSign
 } from "lucide-react";
 
 export default function Navigation() {
@@ -37,6 +38,7 @@ export default function Navigation() {
     { path: "/", label: "Chấm công", icon: LayoutDashboard },
     { path: "/workers", label: "Nhân viên", icon: Users },
     { path: "/reports", label: "Báo cáo", icon: BarChart3 },
+    { path: "/payroll", label: "Tính lương", icon: DollarSign },
     { path: "/export", label: "Xuất BC", icon: Download },
     { path: "/profile", label: "Profile", icon: User },
   ];
